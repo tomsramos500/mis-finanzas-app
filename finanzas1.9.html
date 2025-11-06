@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Finanzas</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="icon" type="image/png" href="img/logo.png">
+    
+    <link rel="apple-touch-icon" href="img/logo.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <script src="js/chart.min.js"></script>
+
+    <style>
+        /* --- Estilos Generales --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        #seccion-app { padding: 30px; }
+
+        /* --- Estilos para el logo en el header --- */
+        .app-header {
+            display: flex;
+            align-items: center;
+            gap: 15px; 
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .app-logo {
+            width: 48px; 
+            height: 48px;
+        }
+        .app-header h1 {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+        h2 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* --- Selector de Mes --- */
+        .selector-mes {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        .selector-mes label { margin-right: 10px; }
+        .selector-mes select {
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        /* --- Formulario de Ingreso --- */
+        .formulario {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .formulario input, .formulario select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; 
+        }
+        .formulario .span-2 { grid-column: span 2; }
+        .formulario button {
+            grid-column: span 2;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* --- Toggle de Vistas --- */
+        .vista-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .vista-toggle button { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border: 1px solid #ccc; background-color: #f9f9f9; cursor: pointer; border-radius: 4px; }
+        .vista-toggle button.active { background-color: #007bff; color: white; border-color: #007bff; }
+        
+        /* --- Vistas: Resumen y Gráfico --- */
+        .resumen { background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .resumen div { display: flex; justify-content: space-between; font-size: 18px; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .resumen div span:first-child { font-weight: 500; color: #555; }
+        .resumen div span:last-child { font-weight: 600; }
+        .resumen #total-INGRESO { color: #28a745; }
+        .resumen #total-GASTO { color: #dc3545; }
+        .resumen #total-TARJETA { color: #ffc107; }
+        .resumen #total-AHORRO { color: #17a2b8; }
+        .resumen .saldo-total { font-size: 20px; font-weight: bold; color: #333; margin-top: 10px; }
+        #grafico-container { padding: 10px; position: relative; height: 300px; margin-bottom: 20px; }
+        
+        /* --- Vista: Calendario --- */
+        #calendario-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #eee; border: 1px solid #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .calendario-header { background-color: #6c757d; color: white; text-align: center; padding: 8px 0; font-size: 0.9em; font-weight: 600; }
+        .calendario-dia { min-height: 80px; background-color: #fff; padding: 6px; position: relative; }
+        .calendario-dia.dia-valido { cursor: pointer; }
+        .calendario-dia.dia-valido:hover { background-color: #f9f9f9; }
+        .calendario-dia.otro-mes { background-color: #f9f9f9; color: #ccc; }
+        .dia-numero { font-size: 0.9em; font-weight: 500; }
+        .dia-marcador-ingreso, .dia-marcador-gasto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; margin-right: 2px; }
+        .dia-marcador-ingreso { background-color: #28a745; }
+        .dia-marcador-gasto { background-color: #dc3545; }
+
+        /* --- Historial de Transacciones --- */
+        #lista-transacciones { list-style: none; padding: 0; }
+        #lista-transacciones li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        #lista-transacciones li:nth-child(even) { background-color: #fdfdfd; }
+        #lista-transacciones .detalle { flex-grow: 1; display: flex; align-items: center; }
+        #lista-transacciones .monto { font-weight: 600; margin-left: 10px; }
+        #lista-transacciones .dia-historial { font-weight: 600; color: #333; width: 50px; text-align: right; margin-right: 8px; flex-shrink: 0; }
+        #lista-transacciones .motivo { color: #555; }
+        #lista-transacciones .clasif { font-size: 12px; font-weight: 500; padding: 3px 6px; border-radius: 4px; color: white; margin-left: 8px; margin-right: 8px; }
+        .clasif-INGRESO { background-color: #28a745; }
+        .clasif-GASTO { background-color: #dc3545; }
+        .clasif-TARJETA { background-color: #ffc107; color: #333; }
+        .clasif-AHORRO { background-color: #17a2b8; }
+        .clasif-OTRO { background-color: #6c757d; }
+        .btn-eliminar { background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; text-align: center; cursor: pointer; padding: 0; margin-left: 15px; flex-shrink: 0; }
+        .btn-eliminar:hover { background-color: #c82333; }
+        
+        /* --- Estilos del Modal (Pop-up) --- */
+        #modal-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000; }
+        #modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; position: relative; }
+        #modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer; }
+        #modal-close:hover { color: #333; }
+        #modal-titulo { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        #modal-lista { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        #modal-lista .monto-ingreso { color: #28a745; font-weight: 600; }
+        #modal-lista .monto-gasto { color: #dc3545; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="seccion-app">
+            
+            <div class="app-header">
+                <img src="img/logo.png" alt="Logo" class="app-logo">
+                <h1>Mis Finanzas</h1>
+            </div>
+            
+            <div class="selector-mes">
+                <label for="select-mes">Ver Mes:</label>
+                <select id="select-mes"></select>
+            </div>
+
+            <h2>Agregar Transacción</h2>
+            <div class="formulario">
+                <input type="date" id="form-date" class="span-2">
+                <input type="number" id="form-monto" placeholder="Monto (ej: 140000)">
+                <input type="text" id="form-motivo" placeholder="Motivo (ej: Venta rueda)">
+                <select id="form-clasificador" class="span-2"></select>
+                <button id="btn-agregar" class="span-2">Agregar</button>
+            </div>
+
+            <h2>Resumen del Mes</h2>
+            
+            <div class="vista-toggle">
+                <button id="btn-ver-resumen" class="active">Resumen</button>
+                <button id="btn-ver-grafico">Gráfico</button>
+                <button id="btn-ver-calendario">Calendario</button>
+            </div>
+            
+            <div class="resumen" id="resumen-totales"></div>
+            <div id="grafico-container" style="display: none;"><canvas id="grafico-torta"></canvas></div>
+            <div id="calendario-container" style="display: none;"></div>
+
+            <h2>Historial del Mes</h2>
+            <ul id="lista-transacciones"></ul>
+        </div>
+    </div>
+    
+    <div id="modal-container">
+        <div id="modal-content">
+            <span id="modal-close">&times;</span>
+            <h3 id="modal-titulo">Detalles del Día</h3>
+            <ul id="modal-lista">
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        
+        // =======================================
+        //     NUEVO: REGISTRO DEL SERVICE WORKER
+        // =======================================
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+              .then(registration => {
+                console.log('ServiceWorker registrado con éxito:', registration.scope);
+              })
+              .catch(error => {
+                console.log('Error al registrar ServiceWorker:', error);
+              });
+          });
+        }
+        // =======================================
+
+
+        // --- ESTADO DE LA APLICACIÓN ---
+        let transacciones = {}; 
+        let clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
+        let mesSeleccionado = '';
+        let vistaActual = 'resumen';
+        let miGraficoDeTorta = null;
+        const COLORES_CLASIF = {
+            'GASTO': '#dc3545',
+            'TARJETA': '#ffc107',
+            'AHORRO': '#17a2b8',
+            'OTRO': '#6c757d'
+        };
+        const NOMBRES_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const DIAS_SEMANA = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+
+        // --- ELEMENTOS DEL DOM ---
+        const selectMes = document.getElementById('select-mes');
+        const formDate = document.getElementById('form-date');
+        const formMonto = document.getElementById('form-monto');
+        const formMotivo = document.getElementById('form-motivo');
+        const formClasificador = document.getElementById('form-clasificador');
+        const btnAgregar = document.getElementById('btn-agregar');
+        const btnVerResumen = document.getElementById('btn-ver-resumen');
+        const btnVerGrafico = document.getElementById('btn-ver-grafico');
+        const btnVerCalendario = document.getElementById('btn-ver-calendario');
+        const resumenTotalesDiv = document.getElementById('resumen-totales');
+        const graficoContainer = document.getElementById('grafico-container');
+        const graficoCanvas = document.getElementById('grafico-torta');
+        const calendarioContainer = document.getElementById('calendario-container');
+        const listaTransacciones = document.getElementById('lista-transacciones');
+        const modalContainer = document.getElementById('modal-container');
+        const modalCloseBtn = document.getElementById('modal-close');
+        const modalTitulo = document.getElementById('modal-titulo');
+        const modalLista = document.getElementById('modal-lista');
+
+
+        // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
+        function guardarDatosEnLocalStorage() {
+            localStorage.setItem('misFinanzas_transacciones', JSON.stringify(transacciones));
+            localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(Array.from(clasificadores)));
+            console.log("Datos guardados.");
+        }
+
+        function cargarDatosDesdeLocalStorage() {
+            const transGuardadas = localStorage.getItem('misFinanzas_transacciones');
+            const clasifGuardados = localStorage.getItem('misFinanzas_clasificadores');
+
+            if (transGuardadas) {
+                transacciones = JSON.parse(transGuardadas);
+            } else {
+                transacciones = {}; 
+            }
+
+            if (clasifGuardados) {
+                clasificadores = new Set(JSON.parse(clasifGuardados));
+            } else {
+                clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
+            }
+            console.log("Datos cargados.");
+        }
+
+        // --- LÓGICA DE INICIO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Listeners de la app
+            btnAgregar.addEventListener('click', agregarTransaccion);
+            selectMes.addEventListener('change', cambiarMes);
+            btnVerResumen.addEventListener('click', () => cambiarVista('resumen'));
+            btnVerGrafico.addEventListener('click', () => cambiarVista('grafico'));
+            btnVerCalendario.addEventListener('click', () => cambiarVista('calendario'));
+            formClasificador.addEventListener('change', manejarCambioClasificador);
+
+            // Listeners del Modal
+            modalCloseBtn.addEventListener('click', cerrarModal);
+            modalContainer.addEventListener('click', (e) => {
+                if (e.target === modalContainer) {
+                    cerrarModal();
+                }
+            });
+
+            // Preparar la app
+            cargarDatosDesdeLocalStorage(); 
+            popularSelectorDeMes();
+            actualizarSelectClasificadores();
+            
+            mesSeleccionado = selectMes.value;
+            formDate.value = new Date().toISOString().split('T')[0];
+            actualizarUI();
+        });
+        
+        // --- NUEVA FUNCIÓN ---
+        function manejarCambioClasificador() {
+            if (formClasificador.value === '--NUEVO--') {
+                const nuevoClasif = prompt("Escribe el nombre de la nueva clasificación:");
+                
+                if (nuevoClasif && nuevoClasif.trim() !== '') {
+                    const clasifFormateado = nuevoClasif.trim().toUpperCase();
+                    
+                    if (clasificadores.has(clasifFormateado)) {
+                        alert("Esa clasificación ya existe.");
+                        formClasificador.value = clasifFormateado; 
+                    } else {
+                        clasificadores.add(clasifFormateado);
+                        guardarDatosEnLocalStorage();
+                        actualizarSelectClasificadores(); 
+                        formClasificador.value = clasifFormateado; 
+                    }
+                } else {
+                    formClasificador.value = 'GASTO'; 
+                }
+            }
+        }
+
+
+        // --- FUNCIONES PRINCIPALES ---
+        function popularSelectorDeMes() {
+            const hoy = new Date();
+            const anioActual = hoy.getFullYear();
+            const mesActual = hoy.getMonth();
+            const anioFinal = 2030;
+            selectMes.innerHTML = '';
+            const mesesGuardados = Object.keys(transacciones);
+            const primerAnioGuardado = mesesGuardados.length > 0 ? parseInt(mesesGuardados[0].split('-')[0]) : anioActual;
+            const anioInicio = Math.min(primerAnioGuardado, anioActual);
+            for (let anio = anioInicio; anio <= anioFinal; anio++) {
+                for (let mes = 0; mes < 12; mes++) {
+                    const valorMes = `${anio}-${(mes + 1).toString().padStart(2, '0')}`;
+                    const textoMes = `${NOMBRES_MESES[mes]} ${anio}`;
+                    const option = document.createElement('option');
+                    option.value = valorMes;
+                    option.textContent = textoMes;
+                    if (anio === anioActual && mes === mesActual) {
+                        option.selected = true;
+                    }
+                    selectMes.appendChild(option);
+                }
+            }
+        }
+        function cambiarMes() {
+            mesSeleccionado = selectMes.value;
+            actualizarUI();
+        }
+        function cambiarVista(nuevaVista) {
+            vistaActual = nuevaVista;
+            actualizarUI();
+        }
+        function getDatosMesActual() {
+            if (!transacciones[mesSeleccionado]) {
+                transacciones[mesSeleccionado] = [];
+            }
+            return transacciones[mesSeleccionado];
+        }
+
+        function agregarTransaccion() {
+            const date = formDate.value;
+            const monto = parseFloat(formMonto.value);
+            const motivo = formMotivo.value;
+            let clasificador = formClasificador.value; 
+
+            if (!date) { alert("Por favor, selecciona una fecha."); return; }
+            if (isNaN(monto) || monto <= 0 || !motivo) { alert("Por favor, completa el monto y el motivo."); return; }
+            
+            if (clasificador === '--NUEVO--') {
+                alert("Por favor, selecciona una clasificación válida antes de agregar.");
+                return;
+            }
+
+            const nuevaTransaccion = {
+                id: Date.now(), date, monto, motivo, clasificador
+            };
+
+            const mesDeLaTransaccion = date.substring(0, 7);
+            if (!transacciones[mesDeLaTransaccion]) {
+                transacciones[mesDeLaTransaccion] = [];
+                popularSelectorDeMes();
+            }
+            transacciones[mesDeLaTransaccion].push(nuevaTransaccion);
+            
+            selectMes.value = mesDeLaTransaccion;
+            mesSeleccionado = mesDeLaTransaccion;
+            
+            actualizarUI();
+            limpiarFormulario();
+            guardarDatosEnLocalStorage(); 
+        }
+        
+        function eliminarTransaccion(idAEliminar) {
+            if (!confirm("¿Estás seguro de que quieres eliminar esta transacción?")) return;
+            const datosMes = getDatosMesActual();
+            const index = datosMes.findIndex(t => t.id === idAEliminar);
+            if (index > -1) datosMes.splice(index, 1);
+            
+            actualizarUI();
+            guardarDatosEnLocalStorage(); 
+        }
+        
+        function limpiarFormulario() {
+            formDate.value = new Date().toISOString().split('T')[0];
+            formMonto.value = '';
+            formMotivo.value = '';
+            formClasificador.value = 'GASTO';
+        }
+
+        function actualizarSelectClasificadores() {
+            const valorPrevio = formClasificador.value; 
+            
+            formClasificador.innerHTML = ''; 
+            const clasificadoresOrdenados = Array.from(clasificadores).sort();
+            
+            for (let c of clasificadoresOrdenados) {
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                formClasificador.appendChild(option);
+            }
+            
+            const optionNueva = document.createElement('option');
+            optionNueva.value = '--NUEVO--';
+            optionNueva.textContent = '...Añadir nueva clasificación...';
+            optionNueva.style.fontStyle = 'italic'; 
+            optionNueva.style.color = '#555';
+            formClasificador.appendChild(optionNueva);
+            
+            if (valorPrevio && valorPrevio !== '--NUEVO--') {
+                formClasificador.value = valorPrevio;
+            } else {
+                formClasificador.value = 'GASTO'; 
+            }
+        }
+
+        // --- FUNCIONES DE RENDERIZADO ---
+        function actualizarUI() {
+            renderizarLista();
+            resumenTotalesDiv.style.display = 'none';
+            graficoContainer.style.display = 'none';
+            calendarioContainer.style.display = 'none';
+            btnVerResumen.classList.remove('active');
+            btnVerGrafico.classList.remove('active');
+            btnVerCalendario.classList.remove('active');
+            if (vistaActual === 'resumen') {
+                btnVerResumen.classList.add('active');
+                resumenTotalesDiv.style.display = 'block';
+                renderizarResumen();
+            } else if (vistaActual === 'grafico') {
+                btnVerGrafico.classList.add('active');
+                graficoContainer.style.display = 'block';
+                renderizarGrafico();
+            } else if (vistaActual === 'calendario') {
+                btnVerCalendario.classList.add('active');
+                calendarioContainer.style.display = 'grid';
+                renderizarCalendario();
+            }
+        }
+
+        function renderizarLista() {
+            listaTransacciones.innerHTML = ''; 
+            const datosMes = getDatosMesActual();
+            const datosOrdenados = [...datosMes].sort((a, b) => new Date(a.date) - new Date(b.date));
+            for (let t of datosOrdenados) {
+                const li = document.createElement('li');
+                let claseColor = `clasif-${t.clasificador}`;
+                if (!['INGRESO', 'GASTO', 'TARJETA', 'AHORRO'].includes(t.clasificador)) {
+                    claseColor = 'clasif-OTRO';
+                }
+                const fechaObj = new Date(t.date + 'T12:00:00');
+                const dia = fechaObj.getDate().toString().padStart(2, '0');
+                const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
+                const fechaFormateada = `${dia}/${mes}`;
+                li.innerHTML = `
+                    <div class="detalle">
+                        <span class="dia-historial">${fechaFormateada}</span>
+                        <span class="clasif ${claseColor}">${t.clasificador}</span>
+                        <span class="motivo">${t.motivo}</span>
+                    </div>
+                    <span class="monto">$${t.monto.toLocaleString('es-AR')}</span>
+                    <button class="btn-eliminar" onclick="eliminarTransaccion(${t.id})" title="Eliminar">✖</button>
+                `;
+                listaTransacciones.appendChild(li);
+            }
+        }
+
+        function renderizarResumen() {
+            const datosMes = getDatosMesActual();
+            const sumas = {};
+            let saldoTotal = 0.0;
+            for (let c of clasificadores) { sumas[c] = 0; }
+            for (let t of datosMes) {
+                sumas[t.clasificador] += t.monto;
+                if (t.clasificador === 'INGRESO') saldoTotal += t.monto;
+                else saldoTotal -= t.monto;
+            }
+            resumenTotalesDiv.innerHTML = ''; 
+            for (let clasif in sumas) {
+                if (sumas[clasif] > 0) { 
+                    const div = document.createElement('div');
+                    let montoMostrar = sumas[clasif];
+                    let idColor = `total-${clasif}`;
+                    if (clasif !== 'INGRESO') montoMostrar = -sumas[clasif]; 
+                    div.innerHTML = `<span>${clasif}</span> <span id="${idColor}">$${montoMostrar.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>`;
+                    resumenTotalesDiv.appendChild(div);
+                }
+            }
+            const divTotal = document.createElement('div');
+            divTotal.className = 'saldo-total';
+            divTotal.innerHTML = `<span>SALDO TOTAL</span> <span>$${saldoTotal.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>`;
+            resumenTotalesDiv.appendChild(divTotal);
+        }
+        
+        function renderizarGrafico() {
+            const datosMes = getDatosMesActual();
+            if (miGraficoDeTorta) miGraficoDeTorta.destroy();
+            const sumasGastos = {};
+            let totalGastos = 0;
+            for (let t of datosMes) {
+                if (t.clasificador !== 'INGRESO') {
+                    if (!sumasGastos[t.clasificador]) sumasGastos[t.clasificador] = 0;
+                    sumasGastos[t.clasificador] += t.monto;
+                    totalGastos += t.monto;
+                }
+            }
+            const ctx = graficoCanvas.getContext('2d');
+            if (totalGastos === 0) {
+                 ctx.clearRect(0, 0, graficoCanvas.width, graficoCanvas.height);
+                 ctx.save();
+                 ctx.fillStyle = '#999'; ctx.font = '16px Arial'; ctx.textAlign = 'center';
+                 ctx.fillText('No hay gastos para mostrar.', graficoCanvas.width / 2, graficoCanvas.height / 2);
+                 ctx.restore();
+                 return;
+            }
+            const labels = Object.keys(sumasGastos);
+            const data = Object.values(sumasGastos);
+            const colors = labels.map(label => COLORES_CLASIF[label] || COLORES_CLASIF['OTRO']);
+            miGraficoDeTorta = new Chart(ctx, {
+                type: 'pie', data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#fff' }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (c) => `$${c.parsed.toLocaleString('es-AR')} (${(c.parsed/totalGastos*100).toFixed(1)}%)` }}
+                    }
+                }
+            });
+        }
+        
+        function renderizarCalendario() {
+            calendarioContainer.innerHTML = '';
+            const datosMes = getDatosMesActual();
+            const datosPorDia = {};
+            for (let t of datosMes) {
+                const dia = new Date(t.date + 'T12:00:00').getDate();
+                if (!datosPorDia[dia]) datosPorDia[dia] = new Set();
+                datosPorDia[dia].add(t.clasificador);
+            }
+            const [anio, mes] = mesSeleccionado.split('-').map(Number);
+            const primerDiaSemana = new Date(anio, mes - 1, 1).getDay();
+            const diasEnMes = new Date(anio, mes, 0).getDate();
+            for (let dia of DIAS_SEMANA) {
+                const diaHeader = document.createElement('div');
+                diaHeader.className = 'calendario-header';
+                diaHeader.textContent = dia;
+                calendarioContainer.appendChild(diaHeader);
+            }
+            for (let i = 0; i < primerDiaSemana; i++) {
+                const diaVacio = document.createElement('div');
+                diaVacio.className = 'calendario-dia otro-mes';
+                calendarioContainer.appendChild(diaVacio);
+            }
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const diaDiv = document.createElement('div');
+                diaDiv.className = 'calendario-dia dia-valido';
+                diaDiv.setAttribute('onclick', `mostrarModalDia(${dia})`);
+                const numDiv = document.createElement('div');
+                numDiv.className = 'dia-numero';
+                numDiv.textContent = dia;
+                diaDiv.appendChild(numDiv);
+                if (datosPorDia[dia]) {
+                    if (datosPorDia[dia].has('INGRESO')) {
+                        const marcador = document.createElement('span');
+                        marcador.className = 'dia-marcador-ingreso';
+                        diaDiv.appendChild(marcador);
+                    }
+                    if ([...datosPorDia[dia]].some(c => c !== 'INGRESO')) {
+                        const marcador = document.createElement('span');
+                        marcador.className = 'dia-marcador-gasto';
+                        diaDiv.appendChild(marcador);
+                    }
+                }
+                calendarioContainer.appendChild(diaDiv);
+            }
+        }
+        
+        // --- FUNCIONES PARA EL MODAL ---
+        function mostrarModalDia(dia) {
+            const datosDia = getDatosMesActual().filter(t => {
+                return new Date(t.date + 'T12:00:00').getDate() === dia;
+            });
+            const [anio, mes] = mesSeleccionado.split('-');
+            const fechaTitulo = `${dia} de ${NOMBRES_MESES[mes-1]} de ${anio}`;
+            modalTitulo.textContent = `Detalles del ${fechaTitulo}`;
+            modalLista.innerHTML = ''; 
+            if (datosDia.length === 0) {
+                modalLista.innerHTML = '<li>No hay transacciones para este día.</li>';
+            } else {
+                for (let t of datosDia) {
+                    const li = document.createElement('li');
+                    let claseMonto = (t.clasificador === 'INGRESO') ? 'monto-ingreso' : 'monto-gasto';
+                    let signo = (t.clasificador === 'INGRESO') ? '+' : '-';
+                    li.innerHTML = `
+                        <span>(${t.clasificador}) ${t.motivo}</span>
+                        <span class="${claseMonto}">${signo} $${t.monto.toLocaleString('es-AR')}</span>
+                    `;
+                    modalLista.appendChild(li);
+                }
+            }
+            modalContainer.style.display = 'flex';
+        }
+        
+        function cerrarModal() {
+            modalContainer.style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>
