@@ -17,10 +17,25 @@
     <script src="js/chart.min.js"></script>
 
     <style>
+        /* Paleta de colores basada en tu logo (Modo Oscuro) */
+        :root {
+            --color-fondo: #1A1D2D; 
+            --color-fondo-container: #2C2F48; 
+            --color-primario-verde: #3DDC84; 
+            --color-secundario-azul: #00C4FF; 
+            --color-texto-principal: #FFFFFF;
+            --color-texto-secundario: #E0E0E0;
+            --color-borde: #4A4D64;
+            --color-input: #3B3F5C;
+            --color-gasto: #dc3545; /* Rojo para gastos */
+            --color-tarjeta: #ffc107; /* Amarillo para tarjeta */
+        }
+
         /* --- Estilos Generales --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
+            background-color: var(--color-fondo); 
+            color: var(--color-texto-secundario); 
             margin: 0;
             padding: 20px;
             display: flex;
@@ -29,9 +44,15 @@
         .container {
             width: 100%;
             max-width: 800px;
-            background: #fff;
+            
+            /* Efecto Glassmorphism */
+            background: rgba(44, 47, 72, 0.85); /* --color-fondo-container con transparencia */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* Para Safari */
+            border: 1px solid var(--color-borde); /* Borde sutil para el vidrio */
+            
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
             overflow: hidden;
         }
         #seccion-app { padding: 30px; }
@@ -41,7 +62,7 @@
             display: flex;
             align-items: center;
             gap: 15px; 
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid var(--color-borde); 
             padding-bottom: 10px;
         }
         .app-logo {
@@ -56,10 +77,10 @@
         }
 
         h1, h2 {
-            color: #333;
+            color: var(--color-texto-principal); 
         }
         h2 {
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid var(--color-borde); 
             padding-bottom: 10px;
         }
 
@@ -73,8 +94,10 @@
         .selector-mes select {
             padding: 8px;
             font-size: 1em;
-            border: 1px solid #ccc;
+            border: 1px solid var(--color-borde); 
             border-radius: 4px;
+            background-color: var(--color-input); 
+            color: var(--color-texto-principal); 
         }
         
         /* --- Formulario de Ingreso --- */
@@ -87,78 +110,218 @@
         .formulario input, .formulario select {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid var(--color-borde); 
             border-radius: 4px;
             box-sizing: border-box; 
+            background-color: var(--color-input); 
+            color: var(--color-texto-principal); 
         }
+        .formulario input::placeholder {
+            color: #9a9a9a;
+        }
+        .formulario input[type="date"] {
+            color-scheme: dark;
+        }
+
         .formulario .span-2 { grid-column: span 2; }
         .formulario button {
             grid-column: span 2;
             padding: 12px;
-            background-color: #28a745;
-            color: white;
+            background-color: var(--color-primario-verde); 
+            color: var(--color-fondo); 
+            font-weight: bold;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .formulario button:hover {
+            background-color: #34b370;
+        }
+        
+        .formulario button.btn-secundario {
+            background-color: var(--color-secundario-azul);
+            color: var(--color-fondo);
+        }
+        .formulario button.btn-secundario:hover {
+            background-color: #00a4d6;
         }
 
+
         /* --- Toggle de Vistas --- */
-        .vista-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
-        .vista-toggle button { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; border: 1px solid #ccc; background-color: #f9f9f9; cursor: pointer; border-radius: 4px; }
-        .vista-toggle button.active { background-color: #007bff; color: white; border-color: #007bff; }
+        /* !MODIFICADO! .form-toggle usa los mismos estilos que .vista-toggle */
+        .vista-toggle, .form-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .vista-toggle button, .form-toggle button { 
+            flex: 1; 
+            padding: 10px; 
+            font-size: 14px; 
+            font-weight: 500; 
+            border: 1px solid var(--color-borde); 
+            background-color: var(--color-input); 
+            color: var(--color-texto-secundario); 
+            cursor: pointer; 
+            border-radius: 4px; 
+        }
+        .vista-toggle button.active, .form-toggle button.active { 
+            background-color: var(--color-secundario-azul); 
+            color: var(--color-texto-principal); 
+            border-color: var(--color-secundario-azul); 
+        }
+        /* !NUEVO! Margen para el toggle de formulario */
+        .form-toggle {
+            margin-bottom: 20px;
+        }
         
         /* --- Vistas: Resumen y Gráfico --- */
-        .resumen { background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .resumen div { display: flex; justify-content: space-between; font-size: 18px; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .resumen div span:first-child { font-weight: 500; color: #555; }
-        .resumen div span:last-child { font-weight: 600; }
-        .resumen #total-INGRESO { color: #28a745; }
-        .resumen #total-GASTO { color: #dc3545; }
-        .resumen #total-TARJETA { color: #ffc107; }
-        .resumen #total-AHORRO { color: #17a2b8; }
-        .resumen .saldo-total { font-size: 20px; font-weight: bold; color: #333; margin-top: 10px; }
+        .resumen-grid { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px; 
+        }
+        
+        .resumen-card {
+            background-color: var(--color-fondo); /* Fondo más oscuro que el container */
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--color-borde);
+        }
+        .resumen-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-texto-secundario);
+        }
+        .resumen-card .card-monto {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--color-texto-principal);
+            margin-bottom: 15px;
+        }
+        .resumen-card.full-width {
+            grid-column: span 2;
+        }
+        .resumen-card .card-presupuesto-texto {
+            font-size: 14px;
+            color: var(--color-texto-secundario);
+            margin-bottom: 10px;
+        }
+        .resumen-card .card-presupuesto-texto .monto-gastado {
+            font-weight: bold;
+            color: var(--color-texto-principal);
+        }
+        .resumen-card .card-presupuesto-texto .monto-presupuesto {
+            font-weight: bold;
+            color: var(--color-primario-verde);
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: var(--color-input);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--color-secundario-azul);
+            border-radius: 5px;
+            transition: width 0.3s ease-out;
+        }
+        .progress-bar.over-budget {
+            background-color: var(--color-gasto); /* Rojo si te pasas */
+        }
+
+        /* Colores específicos para montos de tarjetas */
+        #card-monto-ingresos { color: var(--color-primario-verde); }
+        #card-monto-gastos { color: var(--color-gasto); }
+        #card-monto-tarjeta { color: var(--color-tarjeta); }
+        #card-monto-ahorro { color: #17a2b8; }
+        /* ----- Fin estilos Resumen ----- */
+
+        
         #grafico-container { padding: 10px; position: relative; height: 300px; margin-bottom: 20px; }
         
         /* --- Vista: Calendario --- */
-        #calendario-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: #eee; border: 1px solid #eee; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        #calendario-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: var(--color-borde); border: 1px solid var(--color-borde); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
         .calendario-header { background-color: #6c757d; color: white; text-align: center; padding: 8px 0; font-size: 0.9em; font-weight: 600; }
-        .calendario-dia { min-height: 80px; background-color: #fff; padding: 6px; position: relative; }
+        .calendario-dia { min-height: 80px; background-color: var(--color-fondo-container); padding: 6px; position: relative; }
         .calendario-dia.dia-valido { cursor: pointer; }
-        .calendario-dia.dia-valido:hover { background-color: #f9f9f9; }
-        .calendario-dia.otro-mes { background-color: #f9f9f9; color: #ccc; }
+        .calendario-dia.dia-valido:hover { background-color: var(--color-input); }
+        .calendario-dia.otro-mes { background-color: var(--color-fondo); color: #666; }
         .dia-numero { font-size: 0.9em; font-weight: 500; }
         .dia-marcador-ingreso, .dia-marcador-gasto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; margin-right: 2px; }
-        .dia-marcador-ingreso { background-color: #28a745; }
-        .dia-marcador-gasto { background-color: #dc3545; }
+        .dia-marcador-ingreso { background-color: var(--color-primario-verde); }
+        .dia-marcador-gasto { background-color: var(--color-gasto); }
 
         /* --- Historial de Transacciones --- */
         #lista-transacciones { list-style: none; padding: 0; }
-        #lista-transacciones li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        #lista-transacciones li:nth-child(even) { background-color: #fdfdfd; }
+        #lista-transacciones li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--color-borde); }
+        #lista-transacciones li:nth-child(even) { background-color: rgba(0,0,0,0.1); }
         #lista-transacciones .detalle { flex-grow: 1; display: flex; align-items: center; }
         #lista-transacciones .monto { font-weight: 600; margin-left: 10px; }
-        #lista-transacciones .dia-historial { font-weight: 600; color: #333; width: 50px; text-align: right; margin-right: 8px; flex-shrink: 0; }
-        #lista-transacciones .motivo { color: #555; }
+        #lista-transacciones .dia-historial { font-weight: 600; color: var(--color-texto-principal); width: 50px; text-align: right; margin-right: 8px; flex-shrink: 0; }
+        #lista-transacciones .motivo { color: var(--color-texto-secundario); }
         #lista-transacciones .clasif { font-size: 12px; font-weight: 500; padding: 3px 6px; border-radius: 4px; color: white; margin-left: 8px; margin-right: 8px; }
-        .clasif-INGRESO { background-color: #28a745; }
-        .clasif-GASTO { background-color: #dc3545; }
-        .clasif-TARJETA { background-color: #ffc107; color: #333; }
+        
+        .clasif-INGRESO { background-color: var(--color-primario-verde); color: var(--color-fondo); }
+        .clasif-GASTO { background-color: var(--color-gasto); }
+        .clasif-TARJETA { background-color: var(--color-tarjeta); color: #333; }
         .clasif-AHORRO { background-color: #17a2b8; }
         .clasif-OTRO { background-color: #6c757d; }
-        .btn-eliminar { background-color: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; text-align: center; cursor: pointer; padding: 0; margin-left: 15px; flex-shrink: 0; }
+        
+        .btn-eliminar { background-color: var(--color-gasto); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; text-align: center; cursor: pointer; padding: 0; margin-left: 15px; flex-shrink: 0; }
         .btn-eliminar:hover { background-color: #c82333; }
         
+        #lista-presupuestos-actuales {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        #lista-presupuestos-actuales li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--color-input);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .btn-eliminar-presupuesto {
+            color: var(--color-gasto);
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-eliminar-presupuesto:hover {
+            text-decoration: underline;
+        }
+        
         /* --- Estilos del Modal (Pop-up) --- */
-        #modal-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000; }
-        #modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; position: relative; }
+        #modal-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); justify-content: center; align-items: center; z-index: 1000; }
+        #modal-content { 
+            background-color: rgba(44, 47, 72, 0.9); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); 
+            
+            padding: 25px; 
+            border-radius: 8px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+            width: 90%; 
+            max-width: 500px; 
+            position: relative; 
+            border: 1px solid var(--color-borde);
+        }
         #modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer; }
-        #modal-close:hover { color: #333; }
-        #modal-titulo { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        #modal-close:hover { color: var(--color-texto-principal); }
+        #modal-titulo { margin-top: 0; border-bottom: 1px solid var(--color-borde); padding-bottom: 10px; }
         #modal-lista { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
-        #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-        #modal-lista .monto-ingreso { color: #28a745; font-weight: 600; }
-        #modal-lista .monto-gasto { color: #dc3545; font-weight: 600; }
+        #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-borde); }
+        #modal-lista .monto-ingreso { color: var(--color-primario-verde); font-weight: 600; }
+        #modal-lista .monto-gasto { color: var(--color-gasto); font-weight: 600; }
 
     </style>
 </head>
@@ -178,14 +341,32 @@
                 <select id="select-mes"></select>
             </div>
 
-            <h2>Agregar Transacción</h2>
-            <div class="formulario">
-                <input type="date" id="form-date" class="span-2">
-                <input type="number" id="form-monto" placeholder="Monto (ej: 140000)">
-                <input type="text" id="form-motivo" placeholder="Motivo (ej: Venta rueda)">
-                <select id="form-clasificador" class="span-2"></select>
-                <button id="btn-agregar" class="span-2">Agregar</button>
+            <div class="form-toggle vista-toggle">
+                <button id="btn-ver-form-transaccion" class="active">Agregar Transacción</button>
+                <button id="btn-ver-form-presupuesto">Fijar Presupuesto</button>
             </div>
+
+            <div id="seccion-agregar-transaccion">
+                <div class="formulario">
+                    <input type="date" id="form-date" class="span-2">
+                    <input type="number" id="form-monto" placeholder="Monto (ej: 140000)">
+                    <input type="text" id="form-motivo" placeholder="Motivo (ej: Venta rueda)">
+                    <select id="form-clasificador" class="span-2"></select>
+                    <button id="btn-agregar" class="span-2">Agregar</button>
+                </div>
+            </div>
+            
+            <div id="seccion-fijar-presupuesto" style="display: none;">
+                <div class="formulario">
+                    <select id="form-presupuesto-clasif" class="span-2">
+                        </select>
+                    <input type="number" id="form-presupuesto-monto" placeholder="Monto presupuestado" class="span-2">
+                    <button id="btn-guardar-presupuesto" class="span-2 btn-secundario">Guardar Presupuesto</button>
+                </div>
+                <ul id="lista-presupuestos-actuales">
+                    </ul>
+            </div>
+
 
             <h2>Resumen del Mes</h2>
             
@@ -195,7 +376,9 @@
                 <button id="btn-ver-calendario">Calendario</button>
             </div>
             
-            <div class="resumen" id="resumen-totales"></div>
+            <div class="resumen-grid" id="resumen-totales">
+                </div>
+            
             <div id="grafico-container" style="display: none;"><canvas id="grafico-torta"></canvas></div>
             <div id="calendario-container" style="display: none;"></div>
 
@@ -216,7 +399,7 @@
     <script>
         
         // =======================================
-        //     NUEVO: REGISTRO DEL SERVICE WORKER
+        //     REGISTRO DEL SERVICE WORKER
         // =======================================
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
@@ -234,16 +417,20 @@
 
         // --- ESTADO DE LA APLICACIÓN ---
         let transacciones = {}; 
+        let presupuestos = {}; 
         let clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
         let mesSeleccionado = '';
         let vistaActual = 'resumen';
+        let vistaFormularioActual = 'transaccion'; // !NUEVO!
         let miGraficoDeTorta = null;
+        
         const COLORES_CLASIF = {
             'GASTO': '#dc3545',
             'TARJETA': '#ffc107',
             'AHORRO': '#17a2b8',
             'OTRO': '#6c757d'
         };
+        
         const NOMBRES_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         const DIAS_SEMANA = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
 
@@ -267,17 +454,31 @@
         const modalTitulo = document.getElementById('modal-titulo');
         const modalLista = document.getElementById('modal-lista');
 
+        // Elementos del DOM para Presupuesto
+        const formPresupuestoClasif = document.getElementById('form-presupuesto-clasif');
+        const formPresupuestoMonto = document.getElementById('form-presupuesto-monto');
+        const btnGuardarPresupuesto = document.getElementById('btn-guardar-presupuesto');
+        const listaPresupuestosActuales = document.getElementById('lista-presupuestos-actuales');
+        
+        // !NUEVOS! Elementos del DOM para Toggle de Formularios
+        const btnVerFormTransaccion = document.getElementById('btn-ver-form-transaccion');
+        const btnVerFormPresupuesto = document.getElementById('btn-ver-form-presupuesto');
+        const seccionAgregarTransaccion = document.getElementById('seccion-agregar-transaccion');
+        const seccionFijarPresupuesto = document.getElementById('seccion-fijar-presupuesto');
+
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
         function guardarDatosEnLocalStorage() {
             localStorage.setItem('misFinanzas_transacciones', JSON.stringify(transacciones));
             localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(Array.from(clasificadores)));
+            localStorage.setItem('misFinanzas_presupuestos', JSON.stringify(presupuestos)); 
             console.log("Datos guardados.");
         }
 
         function cargarDatosDesdeLocalStorage() {
             const transGuardadas = localStorage.getItem('misFinanzas_transacciones');
             const clasifGuardados = localStorage.getItem('misFinanzas_clasificadores');
+            const presupGuardados = localStorage.getItem('misFinanzas_presupuestos'); 
 
             if (transGuardadas) {
                 transacciones = JSON.parse(transGuardadas);
@@ -290,6 +491,13 @@
             } else {
                 clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
             }
+            
+            if (presupGuardados) { 
+                presupuestos = JSON.parse(presupGuardados);
+            } else {
+                presupuestos = {};
+            }
+            
             console.log("Datos cargados.");
         }
 
@@ -302,6 +510,11 @@
             btnVerGrafico.addEventListener('click', () => cambiarVista('grafico'));
             btnVerCalendario.addEventListener('click', () => cambiarVista('calendario'));
             formClasificador.addEventListener('change', manejarCambioClasificador);
+            btnGuardarPresupuesto.addEventListener('click', guardarPresupuesto); 
+            
+            // !NUEVO! Listeners para Toggle de Formularios
+            btnVerFormTransaccion.addEventListener('click', () => cambiarVistaFormulario('transaccion'));
+            btnVerFormPresupuesto.addEventListener('click', () => cambiarVistaFormulario('presupuesto'));
 
             // Listeners del Modal
             modalCloseBtn.addEventListener('click', cerrarModal);
@@ -315,13 +528,14 @@
             cargarDatosDesdeLocalStorage(); 
             popularSelectorDeMes();
             actualizarSelectClasificadores();
+            actualizarSelectPresupuesto(); 
             
             mesSeleccionado = selectMes.value;
             formDate.value = new Date().toISOString().split('T')[0];
             actualizarUI();
+            cambiarVistaFormulario('transaccion'); // Asegura estado inicial
         });
         
-        // --- NUEVA FUNCIÓN ---
         function manejarCambioClasificador() {
             if (formClasificador.value === '--NUEVO--') {
                 const nuevoClasif = prompt("Escribe el nombre de la nueva clasificación:");
@@ -330,12 +544,13 @@
                     const clasifFormateado = nuevoClasif.trim().toUpperCase();
                     
                     if (clasificadores.has(clasifFormateado)) {
-                        alert("Esa clasificación ya existe.");
+                        alert("Esa clasificación ya existe."); 
                         formClasificador.value = clasifFormateado; 
                     } else {
                         clasificadores.add(clasifFormateado);
                         guardarDatosEnLocalStorage();
                         actualizarSelectClasificadores(); 
+                        actualizarSelectPresupuesto(); 
                         formClasificador.value = clasifFormateado; 
                     }
                 } else {
@@ -373,10 +588,33 @@
             mesSeleccionado = selectMes.value;
             actualizarUI();
         }
+        
         function cambiarVista(nuevaVista) {
             vistaActual = nuevaVista;
-            actualizarUI();
+            actualizarUI(); // Solo llama a actualizarUI
         }
+        
+        // !NUEVA! Función para cambiar entre formularios
+        function cambiarVistaFormulario(nuevaVista) {
+            vistaFormularioActual = nuevaVista;
+            
+            // Ocultar/Mostrar Secciones
+            seccionAgregarTransaccion.style.display = 'none';
+            seccionFijarPresupuesto.style.display = 'none';
+            
+            // Quitar 'active' de botones
+            btnVerFormTransaccion.classList.remove('active');
+            btnVerFormPresupuesto.classList.remove('active');
+
+            if (nuevaVista === 'transaccion') {
+                seccionAgregarTransaccion.style.display = 'block';
+                btnVerFormTransaccion.classList.add('active');
+            } else if (nuevaVista === 'presupuesto') {
+                seccionFijarPresupuesto.style.display = 'block';
+                btnVerFormPresupuesto.classList.add('active');
+            }
+        }
+
         function getDatosMesActual() {
             if (!transacciones[mesSeleccionado]) {
                 transacciones[mesSeleccionado] = [];
@@ -457,23 +695,108 @@
             if (valorPrevio && valorPrevio !== '--NUEVO--') {
                 formClasificador.value = valorPrevio;
             } else {
-                formClasificador.value = 'GASTO'; 
+                formClasificador.value = clasificadores.has('GASTO') ? 'GASTO' : clasificadoresOrdenados[0]; 
             }
+        }
+        
+        // --- FUNCIONES DE PRESUPUESTO ---
+        function actualizarSelectPresupuesto() {
+            formPresupuestoClasif.innerHTML = '';
+            const clasificadoresOrdenados = Array.from(clasificadores).sort();
+            
+            const optionDefault = document.createElement('option');
+            optionDefault.value = '';
+            optionDefault.textContent = 'Selecciona categoría para presupuestar';
+            formPresupuestoClasif.appendChild(optionDefault);
+
+            for (let c of clasificadoresOrdenados) {
+                if (c === 'INGRESO') continue; 
+                
+                const option = document.createElement('option');
+                option.value = c;
+                option.textContent = c;
+                formPresupuestoClasif.appendChild(option);
+            }
+        }
+
+        function guardarPresupuesto() {
+            const clasificador = formPresupuestoClasif.value;
+            const monto = parseFloat(formPresupuestoMonto.value);
+
+            if (!clasificador) {
+                alert("Por favor, selecciona una categoría.");
+                return;
+            }
+            if (isNaN(monto) || monto < 0) {
+                 alert("Por favor, ingresa un monto válido.");
+                return;
+            }
+
+            const key = `${mesSeleccionado}_${clasificador}`;
+            if (monto === 0) {
+                delete presupuestos[key]; 
+            } else {
+                presupuestos[key] = monto;
+            }
+            
+            guardarDatosEnLocalStorage();
+            actualizarUI(); 
+            
+            formPresupuestoClasif.value = '';
+            formPresupuestoMonto.value = '';
+        }
+        
+        function renderizarListaPresupuestos() {
+            listaPresupuestosActuales.innerHTML = '';
+            let hayPresupuestos = false;
+            
+            for (const key in presupuestos) {
+                if (key.startsWith(mesSeleccionado)) {
+                    hayPresupuestos = true;
+                    const clasificador = key.replace(`${mesSeleccionado}_`, '');
+                    const monto = presupuestos[key];
+                    
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${clasificador}: <strong>$${monto.toLocaleString('es-AR')}</strong></span>
+                        <a href="#" class="btn-eliminar-presupuesto" onclick="eliminarPresupuesto('${clasificador}')">Eliminar</a>
+                    `;
+                    listaPresupuestosActuales.appendChild(li);
+                }
+            }
+            if (!hayPresupuestos) {
+                listaPresupuestosActuales.innerHTML = '<li><span style="color: #9a9a9a; font-style: italic;">No hay presupuestos guardados para este mes.</span></li>';
+            }
+        }
+        
+        function eliminarPresupuesto(clasificador) {
+            if (!confirm(`¿Eliminar el presupuesto para "${clasificador}"?`)) return;
+            
+            const key = `${mesSeleccionado}_${clasificador}`;
+            delete presupuestos[key];
+            guardarDatosEnLocalStorage();
+            actualizarUI();
         }
 
         // --- FUNCIONES DE RENDERIZADO ---
         function actualizarUI() {
+            // Siempre renderiza las listas
             renderizarLista();
+            renderizarListaPresupuestos(); 
+            
+            // Oculta/Muestra vistas de Resumen/Gráfico/Calendario
             resumenTotalesDiv.style.display = 'none';
             graficoContainer.style.display = 'none';
             calendarioContainer.style.display = 'none';
             btnVerResumen.classList.remove('active');
             btnVerGrafico.classList.remove('active');
             btnVerCalendario.classList.remove('active');
+            
+            // Muestra la vista de Resumen/Gráfico/Calendario correcta
             if (vistaActual === 'resumen') {
                 btnVerResumen.classList.add('active');
-                resumenTotalesDiv.style.display = 'block';
-                renderizarResumen();
+                resumenTotalesDiv.style.display = 'grid'; 
+                renderizarResumen(); 
             } else if (vistaActual === 'grafico') {
                 btnVerGrafico.classList.add('active');
                 graficoContainer.style.display = 'block';
@@ -483,6 +806,11 @@
                 calendarioContainer.style.display = 'grid';
                 renderizarCalendario();
             }
+            
+            // Oculta/Muestra los formularios de Transacción/Presupuesto
+            // (esto se maneja ahora con cambiarVistaFormulario, pero lo
+            // dejamos aquí para asegurar el estado al cambiar de mes)
+            cambiarVistaFormulario(vistaFormularioActual);
         }
 
         function renderizarLista() {
@@ -512,38 +840,110 @@
             }
         }
 
+        // FUNCIÓN DE RESUMEN REESCRITA PARA USAR "CARDS"
         function renderizarResumen() {
             const datosMes = getDatosMesActual();
             const sumas = {};
             let saldoTotal = 0.0;
+            
             for (let c of clasificadores) { sumas[c] = 0; }
+            
             for (let t of datosMes) {
+                if (!sumas[t.clasificador]) {
+                    sumas[t.clasificador] = 0;
+                }
                 sumas[t.clasificador] += t.monto;
-                if (t.clasificador === 'INGRESO') saldoTotal += t.monto;
-                else saldoTotal -= t.monto;
-            }
-            resumenTotalesDiv.innerHTML = ''; 
-            for (let clasif in sumas) {
-                if (sumas[clasif] > 0) { 
-                    const div = document.createElement('div');
-                    let montoMostrar = sumas[clasif];
-                    let idColor = `total-${clasif}`;
-                    if (clasif !== 'INGRESO') montoMostrar = -sumas[clasif]; 
-                    div.innerHTML = `<span>${clasif}</span> <span id="${idColor}">$${montoMostrar.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>`;
-                    resumenTotalesDiv.appendChild(div);
+                
+                if (t.clasificador === 'INGRESO') {
+                    saldoTotal += t.monto;
+                } else {
+                    saldoTotal -= t.monto;
                 }
             }
-            const divTotal = document.createElement('div');
-            divTotal.className = 'saldo-total';
-            divTotal.innerHTML = `<span>SALDO TOTAL</span> <span>$${saldoTotal.toLocaleString('es-AR', {minimumFractionDigits: 2})}</span>`;
-            resumenTotalesDiv.appendChild(divTotal);
+            
+            resumenTotalesDiv.innerHTML = ''; 
+            
+            // --- Tarjeta 1: Saldo Total (Ocupa todo el ancho) ---
+            const cardSaldo = document.createElement('div');
+            cardSaldo.className = 'resumen-card full-width';
+            cardSaldo.innerHTML = `
+                <h3>SALDO DEL MES</h3>
+                <div class="card-monto" style="color: ${saldoTotal >= 0 ? 'var(--color-primario-verde)' : 'var(--color-gasto)'};">
+                    $${saldoTotal.toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                </div>
+            `;
+            resumenTotalesDiv.appendChild(cardSaldo);
+
+            // --- Tarjeta 2: Ingresos (Mitad de ancho) ---
+            if (sumas['INGRESO'] > 0) {
+                const cardIngreso = document.createElement('div');
+                cardIngreso.className = 'resumen-card';
+                cardIngreso.innerHTML = `
+                    <h3>INGRESOS</h3>
+                    <div class="card-monto" id="card-monto-ingresos">
+                        $${sumas['INGRESO'].toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                    </div>
+                `;
+                resumenTotalesDiv.appendChild(cardIngreso);
+            }
+
+            // --- Tarjetas de Gastos y Presupuestos (El resto) ---
+            for (let clasif in sumas) {
+                if (clasif === 'INGRESO' || sumas[clasif] <= 0) continue; 
+                
+                const gastado = sumas[clasif];
+                const keyPresupuesto = `${mesSeleccionado}_${clasif}`;
+                const presupuestado = presupuestos[keyPresupuesto] || 0;
+
+                const cardGasto = document.createElement('div');
+                cardGasto.className = `resumen-card ${presupuestado > 0 ? 'full-width' : ''}`;
+                
+                let colorGasto = COLORES_CLASIF[clasif] || COLORES_CLASIF['OTRO'];
+                
+                if (clasif === 'GASTO' && !COLORES_CLASIF[clasif]) {
+                    colorGasto = 'var(--color-gasto)';
+                }
+
+                let contenidoPresupuesto = '';
+                if (presupuestado > 0) {
+                    let porcentaje = (gastado / presupuestado) * 100;
+                    let barraClass = 'progress-bar';
+                    
+                    if (porcentaje > 100) {
+                        barraClass += ' over-budget';
+                        porcentaje = 100; 
+                    }
+
+                    contenidoPresupuesto = `
+                        <div class="card-presupuesto-texto">
+                            <span class="monto-gastado">$${gastado.toLocaleString('es-AR')}</span> de 
+                            <span class="monto-presupuesto">$${presupuestado.toLocaleString('es-AR')}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="${barraClass}" style="width: ${porcentaje}%;"></div>
+                        </div>
+                    `;
+                }
+
+                cardGasto.innerHTML = `
+                    <h3>${clasif}</h3>
+                    <div class="card-monto" style="color: ${colorGasto};">
+                        -$${gastado.toLocaleString('es-AR', {minimumFractionDigits: 2})}
+                    </div>
+                    ${contenidoPresupuesto}
+                `;
+                resumenTotalesDiv.appendChild(cardGasto);
+            }
         }
+        
         
         function renderizarGrafico() {
             const datosMes = getDatosMesActual();
             if (miGraficoDeTorta) miGraficoDeTorta.destroy();
+
             const sumasGastos = {};
             let totalGastos = 0;
+
             for (let t of datosMes) {
                 if (t.clasificador !== 'INGRESO') {
                     if (!sumasGastos[t.clasificador]) sumasGastos[t.clasificador] = 0;
@@ -551,25 +951,94 @@
                     totalGastos += t.monto;
                 }
             }
+
             const ctx = graficoCanvas.getContext('2d');
+
             if (totalGastos === 0) {
                  ctx.clearRect(0, 0, graficoCanvas.width, graficoCanvas.height);
                  ctx.save();
-                 ctx.fillStyle = '#999'; ctx.font = '16px Arial'; ctx.textAlign = 'center';
+                 ctx.fillStyle = '#9a9a9a';
+                 ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'; 
+                 ctx.textAlign = 'center';
                  ctx.fillText('No hay gastos para mostrar.', graficoCanvas.width / 2, graficoCanvas.height / 2);
                  ctx.restore();
                  return;
             }
+
             const labels = Object.keys(sumasGastos);
             const data = Object.values(sumasGastos);
-            const colors = labels.map(label => COLORES_CLASIF[label] || COLORES_CLASIF['OTRO']);
+
+            const backgroundColors = labels.map(label => {
+                return COLORES_CLASIF[label] || COLORES_CLASIF['OTRO']; 
+            });
+
             miGraficoDeTorta = new Chart(ctx, {
-                type: 'pie', data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: '#fff' }] },
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: 'transparent', 
+                        borderWidth: 0,              
+                        hoverOffset: 8               
+                    }]
+                },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 20,
+                            bottom: 20,
+                            left: 20,
+                            right: 20
+                        }
+                    },
                     plugins: {
-                        legend: { position: 'top' },
-                        tooltip: { callbacks: { label: (c) => `$${c.parsed.toLocaleString('es-AR')} (${(c.parsed/totalGastos*100).toFixed(1)}%)` }}
+                        title: {
+                            display: true,
+                            text: 'Distribución de Gastos del Mes',
+                            color: '#FFFFFF',                     
+                            font: {
+                                size: 18,
+                                weight: 'bold',
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                            },
+                            padding: {
+                                top: 10,
+                                bottom: 20
+                            }
+                        },
+                        legend: {
+                            position: 'bottom', 
+                            labels: {
+                                color: '#E0E0E0', 
+                                font: {
+                                    size: 14,
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+                                },
+                                usePointStyle: true, 
+                                padding: 20 
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const percentage = (value / totalGastos * 100).toFixed(1);
+                                    return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
+                                }
+                            },
+                            backgroundColor: '#3B3F5C', 
+                            titleColor: '#FFFFFF',      
+                            bodyColor: '#E0E0E0',       
+                            borderColor: '#4A4D64',     
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                            padding: 10
+                        }
                     }
                 }
             });
