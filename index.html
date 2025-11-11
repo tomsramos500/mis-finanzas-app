@@ -17,18 +17,94 @@
     <script src="js/chart.min.js"></script>
 
     <style>
-        /* Paleta de colores basada en tu logo (Modo Oscuro) */
+        /* !NUEVO! Paletas de Temas de Color */
+        
+        /* Tema 1: Oscuro (Default) */
         :root {
             --color-fondo: #1A1D2D; 
-            --color-fondo-container: #2C2F48; 
-            --color-primario-verde: #3DDC84; 
-            --color-secundario-azul: #00C4FF; 
+            --color-fondo-container: rgba(44, 47, 72, 0.85); /* Fondo "Glass" */
+            --color-fondo-container-solido: #2C2F48;
+            --color-fondo-elemento: var(--color-fondo); /* Fondo de cards */
+            --color-primario: #3DDC84; /* Verde logo */
+            --color-primario-texto: #1A1D2D;
+            --color-secundario: #00C4FF; /* Azul logo */
+            --color-secundario-texto: #1A1D2D;
             --color-texto-principal: #FFFFFF;
             --color-texto-secundario: #E0E0E0;
+            --color-texto-placeholder: #9a9a9a;
             --color-borde: #4A4D64;
             --color-input: #3B3F5C;
-            --color-gasto: #dc3545; /* Rojo para gastos */
-            --color-tarjeta: #ffc107; /* Amarillo para tarjeta */
+            --color-gasto: #dc3545;
+            --color-tarjeta: #ffc107;
+            --color-ahorro: #17a2b8;
+            --color-otro: #6c757d;
+            --color-scheme-input-date: dark;
+        }
+        
+        /* Tema 2: Claro */
+        body.theme-light {
+            --color-fondo: #F4F7F6; 
+            --color-fondo-container: rgba(255, 255, 255, 0.85); /* Fondo "Glass" */
+            --color-fondo-container-solido: #FFFFFF;
+            --color-fondo-elemento: #FFFFFF; /* Fondo de cards */
+            --color-primario: #3DDC84; /* Verde logo */
+            --color-primario-texto: #1A1D2D;
+            --color-secundario: #00C4FF; /* Azul logo */
+            --color-secundario-texto: #1A1D2D;
+            --color-texto-principal: #1A1D2D;
+            --color-texto-secundario: #5A5A5A;
+            --color-texto-placeholder: #AAAAAA;
+            --color-borde: #E0E0E0;
+            --color-input: #F0F0F0;
+            --color-gasto: #dc3545;
+            --color-tarjeta: #ffc107;
+            --color-ahorro: #17a2b8;
+            --color-otro: #6c757d;
+            --color-scheme-input-date: light;
+        }
+        
+        /* Tema 3: Rosa */
+        body.theme-pink {
+            --color-fondo: #FFF5F7; 
+            --color-fondo-container: rgba(255, 255, 255, 0.85); /* Fondo "Glass" */
+            --color-fondo-container-solido: #FFFFFF;
+            --color-fondo-elemento: #FFFFFF;
+            --color-primario: #D6336C; /* Rosa Fuerte */
+            --color-primario-texto: #FFFFFF;
+            --color-secundario: #FF79A8; /* Rosa Claro */
+            --color-secundario-texto: #3D0015;
+            --color-texto-principal: #3D0015;
+            --color-texto-secundario: #5E273A;
+            --color-texto-placeholder: #AAAAAA;
+            --color-borde: #FFD6E3;
+            --color-input: #FFF0F3;
+            --color-gasto: #dc3545;
+            --color-tarjeta: #ffc107;
+            --color-ahorro: #17a2b8;
+            --color-otro: #6c757d;
+            --color-scheme-input-date: light;
+        }
+        
+        /* Tema 4: Celeste */
+        body.theme-blue {
+            --color-fondo: #F0F8FF; 
+            --color-fondo-container: rgba(255, 255, 255, 0.85); /* Fondo "Glass" */
+            --color-fondo-container-solido: #FFFFFF;
+            --color-fondo-elemento: #FFFFFF;
+            --color-primario: #007BFF; /* Azul Fuerte */
+            --color-primario-texto: #FFFFFF;
+            --color-secundario: #5BC0DE; /* Azul Info */
+            --color-secundario-texto: #002A52;
+            --color-texto-principal: #002A52;
+            --color-texto-secundario: #2A4B69;
+            --color-texto-placeholder: #AAAAAA;
+            --color-borde: #D6EFFF;
+            --color-input: #E6F3FF;
+            --color-gasto: #dc3545;
+            --color-tarjeta: #ffc107;
+            --color-ahorro: #17a2b8;
+            --color-otro: #6c757d;
+            --color-scheme-input-date: light;
         }
 
         /* --- Estilos Generales --- */
@@ -40,20 +116,22 @@
             padding: 20px;
             display: flex;
             justify-content: center;
+            transition: background-color 0.3s ease;
         }
         .container {
             width: 100%;
             max-width: 800px;
             
             /* Efecto Glassmorphism */
-            background: rgba(44, 47, 72, 0.85); /* --color-fondo-container con transparencia */
+            background: var(--color-fondo-container);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px); /* Para Safari */
-            border: 1px solid var(--color-borde); /* Borde sutil para el vidrio */
+            -webkit-backdrop-filter: blur(10px); 
+            border: 1px solid var(--color-borde); 
             
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
             overflow: hidden;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         #seccion-app { padding: 30px; }
 
@@ -61,12 +139,12 @@
         .app-header {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* !MODIFICADO! */
+            justify-content: space-between; 
             gap: 15px; 
             border-bottom: 2px solid var(--color-borde); 
             padding-bottom: 10px;
         }
-        .app-header-logo { /* !NUEVO! Contenedor para logo y título */
+        .app-header-logo { 
             display: flex;
             align-items: center;
             gap: 15px;
@@ -82,7 +160,6 @@
             margin-bottom: 0;
         }
 
-        /* !NUEVO! Botón Menú Hamburguesa */
         #btn-menu {
             background: none;
             border: none;
@@ -91,14 +168,17 @@
             font-weight: bold;
             cursor: pointer;
             padding: 0 10px;
+            transition: color 0.3s ease;
         }
 
         h1, h2 {
             color: var(--color-texto-principal); 
+            transition: color 0.3s ease;
         }
         h2 {
             border-bottom: 2px solid var(--color-borde); 
             padding-bottom: 10px;
+            transition: border-color 0.3s ease;
         }
 
         /* --- Selector de Mes --- */
@@ -115,6 +195,7 @@
             border-radius: 4px;
             background-color: var(--color-input); 
             color: var(--color-texto-principal); 
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         
         /* --- Formulario de Ingreso --- */
@@ -132,20 +213,21 @@
             box-sizing: border-box; 
             background-color: var(--color-input); 
             color: var(--color-texto-principal); 
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         .formulario input::placeholder {
-            color: #9a9a9a;
+            color: var(--color-texto-placeholder);
         }
         .formulario input[type="date"] {
-            color-scheme: dark;
+            color-scheme: var(--color-scheme-input-date);
         }
 
         .formulario .span-2 { grid-column: span 2; }
         .formulario button {
             grid-column: span 2;
             padding: 12px;
-            background-color: var(--color-primario-verde); 
-            color: var(--color-fondo); 
+            background-color: var(--color-primario); 
+            color: var(--color-primario-texto); 
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -154,15 +236,12 @@
             transition: background-color 0.2s;
         }
         .formulario button:hover {
-            background-color: #34b370;
+            filter: brightness(0.9);
         }
         
         .formulario button.btn-secundario {
-            background-color: var(--color-secundario-azul);
-            color: var(--color-fondo);
-        }
-        .formulario button.btn-secundario:hover {
-            background-color: #00a4d6;
+            background-color: var(--color-secundario);
+            color: var(--color-secundario-texto);
         }
         
         .formulario button.btn-peligro {
@@ -170,7 +249,7 @@
             color: var(--color-texto-principal);
         }
         .formulario button.btn-peligro:hover {
-             background-color: #c82333;
+             filter: brightness(0.9);
         }
 
 
@@ -186,11 +265,12 @@
             color: var(--color-texto-secundario); 
             cursor: pointer; 
             border-radius: 4px; 
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         .vista-toggle button.active, .form-toggle button.active { 
-            background-color: var(--color-secundario-azul); 
-            color: var(--color-texto-principal); 
-            border-color: var(--color-secundario-azul); 
+            background-color: var(--color-secundario); 
+            color: var(--color-secundario-texto); 
+            border-color: var(--color-secundario); 
         }
         .form-toggle {
             margin-bottom: 20px;
@@ -205,10 +285,11 @@
         }
         
         .resumen-card {
-            background-color: var(--color-fondo); 
+            background-color: var(--color-fondo-elemento); 
             padding: 20px;
             border-radius: 8px;
             border: 1px solid var(--color-borde);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .resumen-card h3 {
             margin-top: 0;
@@ -216,12 +297,14 @@
             font-size: 16px;
             font-weight: 600;
             color: var(--color-texto-secundario);
+            transition: color 0.3s ease;
         }
         .resumen-card .card-monto {
             font-size: 28px;
             font-weight: bold;
             color: var(--color-texto-principal);
             margin-bottom: 15px;
+            transition: color 0.3s ease;
         }
         .resumen-card.full-width {
             grid-column: span 2;
@@ -230,6 +313,7 @@
             font-size: 14px;
             color: var(--color-texto-secundario);
             margin-bottom: 10px;
+            transition: color 0.3s ease;
         }
         .resumen-card .card-presupuesto-texto .monto-gastado {
             font-weight: bold;
@@ -237,7 +321,7 @@
         }
         .resumen-card .card-presupuesto-texto .monto-presupuesto {
             font-weight: bold;
-            color: var(--color-primario-verde);
+            color: var(--color-primario);
         }
         
         .progress-bar-container {
@@ -246,21 +330,22 @@
             background-color: var(--color-input);
             border-radius: 5px;
             overflow: hidden;
+            transition: background-color 0.3s ease;
         }
         .progress-bar {
             height: 100%;
-            background-color: var(--color-secundario-azul);
+            background-color: var(--color-secundario);
             border-radius: 5px;
-            transition: width 0.3s ease-out;
+            transition: width 0.3s ease-out, background-color 0.3s ease;
         }
         .progress-bar.over-budget {
             background-color: var(--color-gasto); 
         }
 
-        #card-monto-ingresos { color: var(--color-primario-verde); }
+        #card-monto-ingresos { color: var(--color-primario); }
         #card-monto-gastos { color: var(--color-gasto); }
         #card-monto-tarjeta { color: var(--color-tarjeta); }
-        #card-monto-ahorro { color: #17a2b8; }
+        #card-monto-ahorro { color: var(--color-ahorro); }
         /* ----- Fin estilos Resumen ----- */
 
         
@@ -268,19 +353,19 @@
         
         /* --- Vista: Calendario --- */
         #calendario-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: var(--color-borde); border: 1px solid var(--color-borde); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
-        .calendario-header { background-color: #6c757d; color: white; text-align: center; padding: 8px 0; font-size: 0.9em; font-weight: 600; }
-        .calendario-dia { min-height: 80px; background-color: var(--color-fondo-container); padding: 6px; position: relative; }
+        .calendario-header { background-color: var(--color-otro); color: white; text-align: center; padding: 8px 0; font-size: 0.9em; font-weight: 600; }
+        .calendario-dia { min-height: 80px; background-color: var(--color-fondo-container-solido); padding: 6px; position: relative; transition: background-color 0.3s ease; }
         .calendario-dia.dia-valido { cursor: pointer; }
         .calendario-dia.dia-valido:hover { background-color: var(--color-input); }
         .calendario-dia.otro-mes { background-color: var(--color-fondo); color: #666; }
         .dia-numero { font-size: 0.9em; font-weight: 500; }
         .dia-marcador-ingreso, .dia-marcador-gasto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; margin-right: 2px; }
-        .dia-marcador-ingreso { background-color: var(--color-primario-verde); }
+        .dia-marcador-ingreso { background-color: var(--color-primario); }
         .dia-marcador-gasto { background-color: var(--color-gasto); }
 
         /* --- Historial de Transacciones --- */
         #lista-transacciones { list-style: none; padding: 0; }
-        #lista-transacciones li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--color-borde); }
+        #lista-transacciones li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--color-borde); transition: border-color 0.3s ease; }
         #lista-transacciones li:nth-child(even) { background-color: rgba(0,0,0,0.1); }
         #lista-transacciones .detalle { flex-grow: 1; display: flex; align-items: center; }
         #lista-transacciones .monto { font-weight: 600; margin-left: 10px; }
@@ -288,11 +373,11 @@
         #lista-transacciones .motivo { color: var(--color-texto-secundario); }
         #lista-transacciones .clasif { font-size: 12px; font-weight: 500; padding: 3px 6px; border-radius: 4px; color: white; margin-left: 8px; margin-right: 8px; }
         
-        .clasif-INGRESO { background-color: var(--color-primario-verde); color: var(--color-fondo); }
+        .clasif-INGRESO { background-color: var(--color-primario); color: var(--color-primario-texto); }
         .clasif-GASTO { background-color: var(--color-gasto); }
         .clasif-TARJETA { background-color: var(--color-tarjeta); color: #333; }
-        .clasif-AHORRO { background-color: #17a2b8; }
-        .clasif-OTRO { background-color: #6c757d; }
+        .clasif-AHORRO { background-color: var(--color-ahorro); }
+        .clasif-OTRO { background-color: var(--color-otro); }
         
         .btn-eliminar { background-color: var(--color-gasto); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; line-height: 20px; text-align: center; cursor: pointer; padding: 0; margin-left: 15px; flex-shrink: 0; }
         .btn-eliminar:hover { background-color: #c82333; }
@@ -310,6 +395,7 @@
             background-color: var(--color-input);
             border-radius: 4px;
             margin-bottom: 8px;
+            transition: background-color 0.3s ease;
         }
         .btn-eliminar-presupuesto {
             color: var(--color-gasto);
@@ -336,16 +422,19 @@
             max-width: 500px; 
             position: relative; 
             border: 1px solid var(--color-borde);
+            
+            background-color: var(--color-fondo-container);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         #modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer; }
         #modal-close:hover { color: var(--color-texto-principal); }
-        #modal-titulo { margin-top: 0; border-bottom: 1px solid var(--color-borde); padding-bottom: 10px; }
+        #modal-titulo { margin-top: 0; border-bottom: 1px solid var(--color-borde); padding-bottom: 10px; transition: border-color 0.3s ease; }
         #modal-lista { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
-        #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-borde); }
-        #modal-lista .monto-ingreso { color: var(--color-primario-verde); font-weight: 600; }
+        #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-borde); transition: border-color 0.3s ease; }
+        #modal-lista .monto-ingreso { color: var(--color-primario); font-weight: 600; }
         #modal-lista .monto-gasto { color: var(--color-gasto); font-weight: 600; }
 
-        /* !NUEVO! Estilos para Menú Lateral */
+        /* Estilos para Menú Lateral */
         #menu-overlay {
             position: fixed;
             top: 0;
@@ -354,7 +443,7 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.6);
             z-index: 1999;
-            display: none; /* Oculto por defecto */
+            display: none; 
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -364,14 +453,14 @@
             left: 0;
             width: 280px;
             height: 100%;
-            background-color: var(--color-fondo-container);
+            background-color: var(--color-fondo-container-solido);
             border-right: 1px solid var(--color-borde);
             box-shadow: 4px 0 15px rgba(0,0,0,0.2);
             z-index: 2000;
             display: flex;
             flex-direction: column;
-            transform: translateX(-100%); /* Oculto por defecto */
-            transition: transform 0.3s ease-out;
+            transform: translateX(-100%); 
+            transition: transform 0.3s ease-out, background-color 0.3s ease, border-color 0.3s ease;
             padding: 20px;
             box-sizing: border-box;
         }
@@ -385,11 +474,13 @@
             border-bottom: 1px solid var(--color-borde);
             padding-bottom: 15px;
             margin-bottom: 20px;
+            transition: border-color 0.3s ease;
         }
         .menu-header span {
             font-size: 1.2em;
             font-weight: 600;
             color: var(--color-texto-principal);
+            transition: color 0.3s ease;
         }
         #btn-close-menu {
             background: none;
@@ -410,11 +501,31 @@
             margin-top: 0;
         }
         
+        .theme-switcher {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .theme-switcher button {
+            padding: 10px;
+            border-radius: 4px;
+            border: 2px solid var(--color-borde);
+            background-color: var(--color-input);
+            color: var(--color-texto-secundario);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .theme-switcher button.active-theme {
+            border-color: var(--color-secundario);
+            color: var(--color-secundario-texto);
+            background-color: var(--color-secundario);
+        }
+        
     </style>
 </head>
-<body>
-
-    <div class="container">
+<body class="theme-default"> <div class="container">
         
         <div id="seccion-app">
             
@@ -489,18 +600,26 @@
     <div id="menu-overlay"></div>
     <nav id="side-menu">
         <div class="menu-header">
-            <span>Herramientas</span>
+            <span>Menú Principal</span>
             <button id="btn-close-menu" title="Cerrar">&times;</button>
         </div>
         
-        <h2>Respaldo de Datos</h2>
+        <h2>Temas de Color</h2>
+        <div class="theme-switcher">
+            <button data-theme="default" id="theme-default">Oscuro</button>
+            <button data-theme="light" id="theme-light">Claro</button>
+            <button data-theme="pink" id="theme-pink">Rosa</button>
+            <button data-theme="blue" id="theme-blue">Celeste</button>
+        </div>
+        
+        <h2 style="margin-top: 30px;">Respaldo de Datos</h2>
         <div class="formulario">
             <button id="btn-exportar" class="span-2 btn-secundario">Exportar Respaldo (Descargar)</button>
             <button id="btn-importar-trigger" class="span-2 btn-peligro">Importar Respaldo (Subir)</button>
             <input type="file" id="input-importar" style="display: none;" accept=".json">
         </div>
         
-        </nav>
+    </nav>
     <script>
         
         // =======================================
@@ -528,6 +647,7 @@
         let vistaActual = 'resumen';
         let vistaFormularioActual = 'transaccion'; 
         let miGraficoDeTorta = null;
+        let temaActual = 'default'; 
         
         const COLORES_CLASIF = {
             'GASTO': '#dc3545',
@@ -558,29 +678,22 @@
         const modalCloseBtn = document.getElementById('modal-close');
         const modalTitulo = document.getElementById('modal-titulo');
         const modalLista = document.getElementById('modal-lista');
-
-        // Elementos del DOM para Presupuesto
         const formPresupuestoClasif = document.getElementById('form-presupuesto-clasif');
         const formPresupuestoMonto = document.getElementById('form-presupuesto-monto');
         const btnGuardarPresupuesto = document.getElementById('btn-guardar-presupuesto');
         const listaPresupuestosActuales = document.getElementById('lista-presupuestos-actuales');
-        
-        // Elementos del DOM para Toggle de Formularios
         const btnVerFormTransaccion = document.getElementById('btn-ver-form-transaccion');
         const btnVerFormPresupuesto = document.getElementById('btn-ver-form-presupuesto');
         const seccionAgregarTransaccion = document.getElementById('seccion-agregar-transaccion');
         const seccionFijarPresupuesto = document.getElementById('seccion-fijar-presupuesto');
-        
-        // Elementos del DOM para Exportar/Importar
         const btnExportar = document.getElementById('btn-exportar');
         const btnImportarTrigger = document.getElementById('btn-importar-trigger');
         const inputImportar = document.getElementById('input-importar');
-        
-        // !NUEVO! Elementos del DOM para Menú Lateral
         const btnMenu = document.getElementById('btn-menu');
         const btnCloseMenu = document.getElementById('btn-close-menu');
         const sideMenu = document.getElementById('side-menu');
         const menuOverlay = document.getElementById('menu-overlay');
+        const themeButtons = document.querySelectorAll('.theme-switcher button');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
@@ -588,6 +701,7 @@
             localStorage.setItem('misFinanzas_transacciones', JSON.stringify(transacciones));
             localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(Array.from(clasificadores)));
             localStorage.setItem('misFinanzas_presupuestos', JSON.stringify(presupuestos)); 
+            localStorage.setItem('misFinanzas_tema', temaActual); 
             console.log("Datos guardados.");
         }
 
@@ -595,30 +709,21 @@
             const transGuardadas = localStorage.getItem('misFinanzas_transacciones');
             const clasifGuardados = localStorage.getItem('misFinanzas_clasificadores');
             const presupGuardados = localStorage.getItem('misFinanzas_presupuestos'); 
+            const temaGuardado = localStorage.getItem('misFinanzas_tema'); 
 
-            if (transGuardadas) {
-                transacciones = JSON.parse(transGuardadas);
-            } else {
-                transacciones = {}; 
-            }
-
-            if (clasifGuardados) {
-                clasificadores = new Set(JSON.parse(clasifGuardados));
-            } else {
-                clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
-            }
-            
-            if (presupGuardados) { 
-                presupuestos = JSON.parse(presupGuardados);
-            } else {
-                presupuestos = {};
-            }
+            transacciones = transGuardadas ? JSON.parse(transGuardadas) : {};
+            clasificadores = clasifGuardados ? new Set(JSON.parse(clasifGuardados)) : new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
+            presupuestos = presupGuardados ? JSON.parse(presupGuardados) : {};
+            temaActual = temaGuardado ? temaGuardado : 'default'; 
             
             console.log("Datos cargados.");
         }
 
         // --- LÓGICA DE INICIO ---
         document.addEventListener('DOMContentLoaded', () => {
+            cargarDatosDesdeLocalStorage(); 
+            aplicarTema(temaActual); 
+            
             // Listeners de la app
             btnAgregar.addEventListener('click', agregarTransaccion);
             selectMes.addEventListener('change', cambiarMes);
@@ -645,13 +750,21 @@
             btnImportarTrigger.addEventListener('click', () => inputImportar.click());
             inputImportar.addEventListener('change', importarDatos);
             
-            // !NUEVO! Listeners para Menú Lateral
+            // Listeners para Menú Lateral
             btnMenu.addEventListener('click', abrirMenu);
             btnCloseMenu.addEventListener('click', cerrarMenu);
             menuOverlay.addEventListener('click', cerrarMenu);
+            
+            // Listeners para Temas
+            themeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tema = button.dataset.theme;
+                    aplicarTema(tema);
+                    cerrarMenu(); 
+                });
+            });
 
             // Preparar la app
-            cargarDatosDesdeLocalStorage(); 
             popularSelectorDeMes();
             actualizarSelectClasificadores();
             actualizarSelectPresupuesto(); 
@@ -685,11 +798,11 @@
             }
         }
         
-        // !NUEVO! --- FUNCIONES DE MENÚ LATERAL ---
+        // --- FUNCIONES DE MENÚ LATERAL ---
         function abrirMenu() {
             sideMenu.classList.add('menu-open');
             menuOverlay.style.display = 'block';
-            setTimeout(() => { // Pequeño delay para que la transición CSS ocurra
+            setTimeout(() => { 
                 menuOverlay.style.opacity = '1';
             }, 10);
         }
@@ -697,9 +810,33 @@
         function cerrarMenu() {
             sideMenu.classList.remove('menu-open');
             menuOverlay.style.opacity = '0';
-            setTimeout(() => { // Espera que termine la transición
+            setTimeout(() => { 
                 menuOverlay.style.display = 'none';
-            }, 300); // 300ms = duración de la transición
+            }, 300); 
+        }
+        
+        // --- FUNCIONES DE TEMAS ---
+        function aplicarTema(tema) {
+            document.body.classList.remove('theme-light', 'theme-pink', 'theme-blue');
+            
+            if (tema !== 'default') {
+                document.body.classList.add(`theme-${tema}`);
+            }
+            
+            themeButtons.forEach(btn => {
+                if (btn.dataset.theme === tema) {
+                    btn.classList.add('active-theme');
+                } else {
+                    btn.classList.remove('active-theme');
+                }
+            });
+
+            temaActual = tema;
+            guardarDatosEnLocalStorage();
+            
+            if (vistaActual === 'grafico') {
+                renderizarGrafico();
+            }
         }
 
 
@@ -1002,7 +1139,7 @@
             cardSaldo.className = 'resumen-card full-width';
             cardSaldo.innerHTML = `
                 <h3>SALDO DEL MES</h3>
-                <div class="card-monto" style="color: ${saldoTotal >= 0 ? 'var(--color-primario-verde)' : 'var(--color-gasto)'};">
+                <div class="card-monto" style="color: ${saldoTotal >= 0 ? 'var(--color-primario)' : 'var(--color-gasto)'};">
                     $${saldoTotal.toLocaleString('es-AR', {minimumFractionDigits: 2})}
                 </div>
             `;
@@ -1032,12 +1169,14 @@
                 const cardGasto = document.createElement('div');
                 cardGasto.className = `resumen-card ${presupuestado > 0 ? 'full-width' : ''}`;
                 
-                let colorGasto = COLORES_CLASIF[clasif] || COLORES_CLASIF['OTRO'];
-                
-                if (clasif === 'GASTO' && !COLORES_CLASIF[clasif]) {
-                    colorGasto = 'var(--color-gasto)';
+                let colorGasto;
+                switch(clasif) {
+                    case 'GASTO': colorGasto = 'var(--color-gasto)'; break;
+                    case 'TARJETA': colorGasto = 'var(--color-tarjeta)'; break;
+                    case 'AHORRO': colorGasto = 'var(--color-ahorro)'; break;
+                    default: colorGasto = 'var(--color-otro)';
                 }
-
+                
                 let contenidoPresupuesto = '';
                 if (presupuestado > 0) {
                     let porcentaje = (gastado / presupuestado) * 100;
@@ -1071,10 +1210,27 @@
         }
         
         
+        // ! ===================================================
+        // ! FUNCIÓN DE GRÁFICO CORREGIDA
+        // ! ===================================================
         function renderizarGrafico() {
-            const datosMes = getDatosMesActual();
             if (miGraficoDeTorta) miGraficoDeTorta.destroy();
+            
+            // Obtener colores del tema actual
+            const bodyStyles = getComputedStyle(document.body);
+            const colorTextoPrincipal = bodyStyles.getPropertyValue('--color-texto-principal').trim();
+            const colorTextoSecundario = bodyStyles.getPropertyValue('--color-texto-secundario').trim();
+            const colorFondoInput = bodyStyles.getPropertyValue('--color-input').trim();
+            const colorBorde = bodyStyles.getPropertyValue('--color-borde').trim();
+            
+            // Obtener valores de colores para el gráfico
+            const colorGasto = bodyStyles.getPropertyValue('--color-gasto').trim();
+            const colorTarjeta = bodyStyles.getPropertyValue('--color-tarjeta').trim();
+            const colorAhorro = bodyStyles.getPropertyValue('--color-ahorro').trim();
+            const colorOtro = bodyStyles.getPropertyValue('--color-otro').trim();
 
+
+            const datosMes = getDatosMesActual();
             const sumasGastos = {};
             let totalGastos = 0;
 
@@ -1091,7 +1247,7 @@
             if (totalGastos === 0) {
                  ctx.clearRect(0, 0, graficoCanvas.width, graficoCanvas.height);
                  ctx.save();
-                 ctx.fillStyle = '#9a9a9a';
+                 ctx.fillStyle = colorTextoSecundario; 
                  ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'; 
                  ctx.textAlign = 'center';
                  ctx.fillText('No hay gastos para mostrar.', graficoCanvas.width / 2, graficoCanvas.height / 2);
@@ -1102,8 +1258,15 @@
             const labels = Object.keys(sumasGastos);
             const data = Object.values(sumasGastos);
 
+            // !CORREGIDO! Asignar los valores de color computados, no las variables CSS
             const backgroundColors = labels.map(label => {
-                return COLORES_CLASIF[label] || COLORES_CLASIF['OTRO']; 
+                switch(label) {
+                    case 'GASTO': return colorGasto;
+                    case 'TARJETA': return colorTarjeta;
+                    case 'AHORRO': return colorAhorro;
+                    // Para clasificadores nuevos, busca en el objeto original o usa 'otro'
+                    default: return COLORES_CLASIF[label] || colorOtro; 
+                }
             });
 
             miGraficoDeTorta = new Chart(ctx, {
@@ -1133,7 +1296,7 @@
                         title: {
                             display: true,
                             text: 'Distribución de Gastos del Mes',
-                            color: '#FFFFFF',                     
+                            color: colorTextoPrincipal, 
                             font: {
                                 size: 18,
                                 weight: 'bold',
@@ -1147,7 +1310,7 @@
                         legend: {
                             position: 'bottom', 
                             labels: {
-                                color: '#E0E0E0', 
+                                color: colorTextoSecundario, 
                                 font: {
                                     size: 14,
                                     family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
@@ -1165,10 +1328,10 @@
                                     return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
                                 }
                             },
-                            backgroundColor: '#3B3F5C', 
-                            titleColor: '#FFFFFF',      
-                            bodyColor: '#E0E0E0',       
-                            borderColor: '#4A4D64',     
+                            backgroundColor: colorFondoInput, 
+                            titleColor: colorTextoPrincipal,      
+                            bodyColor: colorTextoSecundario,       
+                            borderColor: colorBorde,     
                             borderWidth: 1,
                             cornerRadius: 4,
                             padding: 10
