@@ -61,9 +61,15 @@
         .app-header {
             display: flex;
             align-items: center;
+            justify-content: space-between; /* !MODIFICADO! */
             gap: 15px; 
             border-bottom: 2px solid var(--color-borde); 
             padding-bottom: 10px;
+        }
+        .app-header-logo { /* !NUEVO! Contenedor para logo y título */
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         .app-logo {
             width: 48px; 
@@ -74,6 +80,17 @@
             padding-bottom: 0;
             margin-top: 0;
             margin-bottom: 0;
+        }
+
+        /* !NUEVO! Botón Menú Hamburguesa */
+        #btn-menu {
+            background: none;
+            border: none;
+            color: var(--color-texto-principal);
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 10px;
         }
 
         h1, h2 {
@@ -147,10 +164,17 @@
         .formulario button.btn-secundario:hover {
             background-color: #00a4d6;
         }
+        
+        .formulario button.btn-peligro {
+            background-color: var(--color-gasto);
+            color: var(--color-texto-principal);
+        }
+        .formulario button.btn-peligro:hover {
+             background-color: #c82333;
+        }
 
 
         /* --- Toggle de Vistas --- */
-        /* !MODIFICADO! .form-toggle usa los mismos estilos que .vista-toggle */
         .vista-toggle, .form-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
         .vista-toggle button, .form-toggle button { 
             flex: 1; 
@@ -168,7 +192,6 @@
             color: var(--color-texto-principal); 
             border-color: var(--color-secundario-azul); 
         }
-        /* !NUEVO! Margen para el toggle de formulario */
         .form-toggle {
             margin-bottom: 20px;
         }
@@ -182,7 +205,7 @@
         }
         
         .resumen-card {
-            background-color: var(--color-fondo); /* Fondo más oscuro que el container */
+            background-color: var(--color-fondo); 
             padding: 20px;
             border-radius: 8px;
             border: 1px solid var(--color-borde);
@@ -231,10 +254,9 @@
             transition: width 0.3s ease-out;
         }
         .progress-bar.over-budget {
-            background-color: var(--color-gasto); /* Rojo si te pasas */
+            background-color: var(--color-gasto); 
         }
 
-        /* Colores específicos para montos de tarjetas */
         #card-monto-ingresos { color: var(--color-primario-verde); }
         #card-monto-gastos { color: var(--color-gasto); }
         #card-monto-tarjeta { color: var(--color-tarjeta); }
@@ -323,6 +345,71 @@
         #modal-lista .monto-ingreso { color: var(--color-primario-verde); font-weight: 600; }
         #modal-lista .monto-gasto { color: var(--color-gasto); font-weight: 600; }
 
+        /* !NUEVO! Estilos para Menú Lateral */
+        #menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1999;
+            display: none; /* Oculto por defecto */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #side-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background-color: var(--color-fondo-container);
+            border-right: 1px solid var(--color-borde);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%); /* Oculto por defecto */
+            transition: transform 0.3s ease-out;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #side-menu.menu-open {
+            transform: translateX(0);
+        }
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-borde);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .menu-header span {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--color-texto-principal);
+        }
+        #btn-close-menu {
+            background: none;
+            border: none;
+            color: var(--color-texto-secundario);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+        }
+        #side-menu .formulario {
+            display: flex;
+            flex-direction: column;
+        }
+        #side-menu h2 {
+            border: none;
+            padding: 0;
+            margin-top: 0;
+        }
+        
     </style>
 </head>
 <body>
@@ -332,8 +419,11 @@
         <div id="seccion-app">
             
             <div class="app-header">
-                <img src="img/logo.png" alt="Logo" class="app-logo">
-                <h1>Mis Finanzas</h1>
+                <div class="app-header-logo">
+                    <img src="img/logo.png" alt="Logo" class="app-logo">
+                    <h1>Mis Finanzas</h1>
+                </div>
+                <button id="btn-menu" title="Menú">☰</button>
             </div>
             
             <div class="selector-mes">
@@ -395,7 +485,22 @@
             </ul>
         </div>
     </div>
-
+    
+    <div id="menu-overlay"></div>
+    <nav id="side-menu">
+        <div class="menu-header">
+            <span>Herramientas</span>
+            <button id="btn-close-menu" title="Cerrar">&times;</button>
+        </div>
+        
+        <h2>Respaldo de Datos</h2>
+        <div class="formulario">
+            <button id="btn-exportar" class="span-2 btn-secundario">Exportar Respaldo (Descargar)</button>
+            <button id="btn-importar-trigger" class="span-2 btn-peligro">Importar Respaldo (Subir)</button>
+            <input type="file" id="input-importar" style="display: none;" accept=".json">
+        </div>
+        
+        </nav>
     <script>
         
         // =======================================
@@ -421,7 +526,7 @@
         let clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
         let mesSeleccionado = '';
         let vistaActual = 'resumen';
-        let vistaFormularioActual = 'transaccion'; // !NUEVO!
+        let vistaFormularioActual = 'transaccion'; 
         let miGraficoDeTorta = null;
         
         const COLORES_CLASIF = {
@@ -460,11 +565,22 @@
         const btnGuardarPresupuesto = document.getElementById('btn-guardar-presupuesto');
         const listaPresupuestosActuales = document.getElementById('lista-presupuestos-actuales');
         
-        // !NUEVOS! Elementos del DOM para Toggle de Formularios
+        // Elementos del DOM para Toggle de Formularios
         const btnVerFormTransaccion = document.getElementById('btn-ver-form-transaccion');
         const btnVerFormPresupuesto = document.getElementById('btn-ver-form-presupuesto');
         const seccionAgregarTransaccion = document.getElementById('seccion-agregar-transaccion');
         const seccionFijarPresupuesto = document.getElementById('seccion-fijar-presupuesto');
+        
+        // Elementos del DOM para Exportar/Importar
+        const btnExportar = document.getElementById('btn-exportar');
+        const btnImportarTrigger = document.getElementById('btn-importar-trigger');
+        const inputImportar = document.getElementById('input-importar');
+        
+        // !NUEVO! Elementos del DOM para Menú Lateral
+        const btnMenu = document.getElementById('btn-menu');
+        const btnCloseMenu = document.getElementById('btn-close-menu');
+        const sideMenu = document.getElementById('side-menu');
+        const menuOverlay = document.getElementById('menu-overlay');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
@@ -512,7 +628,7 @@
             formClasificador.addEventListener('change', manejarCambioClasificador);
             btnGuardarPresupuesto.addEventListener('click', guardarPresupuesto); 
             
-            // !NUEVO! Listeners para Toggle de Formularios
+            // Listeners para Toggle de Formularios
             btnVerFormTransaccion.addEventListener('click', () => cambiarVistaFormulario('transaccion'));
             btnVerFormPresupuesto.addEventListener('click', () => cambiarVistaFormulario('presupuesto'));
 
@@ -523,6 +639,16 @@
                     cerrarModal();
                 }
             });
+            
+            // Listeners para Exportar/Importar
+            btnExportar.addEventListener('click', exportarDatos);
+            btnImportarTrigger.addEventListener('click', () => inputImportar.click());
+            inputImportar.addEventListener('change', importarDatos);
+            
+            // !NUEVO! Listeners para Menú Lateral
+            btnMenu.addEventListener('click', abrirMenu);
+            btnCloseMenu.addEventListener('click', cerrarMenu);
+            menuOverlay.addEventListener('click', cerrarMenu);
 
             // Preparar la app
             cargarDatosDesdeLocalStorage(); 
@@ -533,7 +659,7 @@
             mesSeleccionado = selectMes.value;
             formDate.value = new Date().toISOString().split('T')[0];
             actualizarUI();
-            cambiarVistaFormulario('transaccion'); // Asegura estado inicial
+            cambiarVistaFormulario('transaccion'); 
         });
         
         function manejarCambioClasificador() {
@@ -557,6 +683,23 @@
                     formClasificador.value = 'GASTO'; 
                 }
             }
+        }
+        
+        // !NUEVO! --- FUNCIONES DE MENÚ LATERAL ---
+        function abrirMenu() {
+            sideMenu.classList.add('menu-open');
+            menuOverlay.style.display = 'block';
+            setTimeout(() => { // Pequeño delay para que la transición CSS ocurra
+                menuOverlay.style.opacity = '1';
+            }, 10);
+        }
+        
+        function cerrarMenu() {
+            sideMenu.classList.remove('menu-open');
+            menuOverlay.style.opacity = '0';
+            setTimeout(() => { // Espera que termine la transición
+                menuOverlay.style.display = 'none';
+            }, 300); // 300ms = duración de la transición
         }
 
 
@@ -591,18 +734,15 @@
         
         function cambiarVista(nuevaVista) {
             vistaActual = nuevaVista;
-            actualizarUI(); // Solo llama a actualizarUI
+            actualizarUI(); 
         }
         
-        // !NUEVA! Función para cambiar entre formularios
         function cambiarVistaFormulario(nuevaVista) {
             vistaFormularioActual = nuevaVista;
             
-            // Ocultar/Mostrar Secciones
             seccionAgregarTransaccion.style.display = 'none';
             seccionFijarPresupuesto.style.display = 'none';
             
-            // Quitar 'active' de botones
             btnVerFormTransaccion.classList.remove('active');
             btnVerFormPresupuesto.classList.remove('active');
 
@@ -780,11 +920,9 @@
 
         // --- FUNCIONES DE RENDERIZADO ---
         function actualizarUI() {
-            // Siempre renderiza las listas
             renderizarLista();
             renderizarListaPresupuestos(); 
             
-            // Oculta/Muestra vistas de Resumen/Gráfico/Calendario
             resumenTotalesDiv.style.display = 'none';
             graficoContainer.style.display = 'none';
             calendarioContainer.style.display = 'none';
@@ -792,7 +930,6 @@
             btnVerGrafico.classList.remove('active');
             btnVerCalendario.classList.remove('active');
             
-            // Muestra la vista de Resumen/Gráfico/Calendario correcta
             if (vistaActual === 'resumen') {
                 btnVerResumen.classList.add('active');
                 resumenTotalesDiv.style.display = 'grid'; 
@@ -807,9 +944,6 @@
                 renderizarCalendario();
             }
             
-            // Oculta/Muestra los formularios de Transacción/Presupuesto
-            // (esto se maneja ahora con cambiarVistaFormulario, pero lo
-            // dejamos aquí para asegurar el estado al cambiar de mes)
             cambiarVistaFormulario(vistaFormularioActual);
         }
 
@@ -1119,6 +1253,79 @@
         
         function cerrarModal() {
             modalContainer.style.display = 'none';
+        }
+        
+        // --- FUNCIONES DE EXPORTAR/IMPORTAR ---
+        
+        function exportarDatos() {
+            console.log("Exportando datos...");
+            
+            const backupDatos = {
+                transacciones: transacciones,
+                presupuestos: presupuestos,
+                clasificadores: Array.from(clasificadores) 
+            };
+            
+            const dataStr = JSON.stringify(backupDatos, null, 2); 
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const fechaHoy = new Date().toISOString().split('T')[0];
+            a.download = `mis_finanzas_backup_${fechaHoy}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert("Respaldo generado con éxito.");
+            cerrarMenu(); // Cerramos el menú después de exportar
+        }
+
+        function importarDatos(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return; 
+            }
+            
+            if (!confirm("¿Importar respaldo? \n\n¡ATENCIÓN! Esto borrará TODOS los datos actuales que tengas en este dispositivo y los reemplazará con los datos del archivo. ¿Continuar?")) {
+                event.target.value = null; 
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const data = JSON.parse(text);
+                    
+                    if (data.transacciones && data.presupuestos && data.clasificadores) {
+                        
+                        transacciones = data.transacciones;
+                        presupuestos = data.presupuestos;
+                        clasificadores = new Set(data.clasificadores);
+                        
+                        guardarDatosEnLocalStorage();
+                        
+                        alert("¡Datos importados con éxito! La aplicación se recargará.");
+                        location.reload();
+                        
+                    } else {
+                        alert("Error: El archivo no parece ser un respaldo válido.");
+                    }
+                } catch (error) {
+                    console.error("Error al importar:", error);
+                    alert("Error: No se pudo leer el archivo. Asegúrate de que sea el archivo .json correcto.");
+                } finally {
+                    event.target.value = null;
+                }
+            };
+            
+            reader.readAsText(file);
         }
 
     </script>
