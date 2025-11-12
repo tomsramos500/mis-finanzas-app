@@ -17,7 +17,7 @@
     <script src="js/chart.min.js"></script>
 
     <style>
-        /* !NUEVO! Paletas de Temas de Color */
+        /* Paletas de Temas de Color */
         
         /* Tema 1: Oscuro (Default) */
         :root {
@@ -348,8 +348,18 @@
         #card-monto-ahorro { color: var(--color-ahorro); }
         /* ----- Fin estilos Resumen ----- */
 
+        #grafico-container, #evolucion-mensual-container { 
+            padding: 10px; 
+            position: relative; 
+            height: 300px; 
+            margin-bottom: 20px; 
+            display: none; /* Ocultos por defecto */
+        }
         
-        #grafico-container { padding: 10px; position: relative; height: 300px; margin-bottom: 20px; }
+        /* !NUEVO! Damos más altura al gráfico de barras horizontal */
+        #evolucion-mensual-container {
+            height: 600px; /* Más altura para que entren los 31 días */
+        }
         
         /* --- Vista: Calendario --- */
         #calendario-container { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background-color: var(--color-borde); border: 1px solid var(--color-borde); border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
@@ -358,7 +368,13 @@
         .calendario-dia.dia-valido { cursor: pointer; }
         .calendario-dia.dia-valido:hover { background-color: var(--color-input); }
         .calendario-dia.otro-mes { background-color: var(--color-fondo); color: #666; }
-        .dia-numero { font-size: 0.9em; font-weight: 500; }
+        
+        .dia-numero { 
+            font-size: 0.9em; 
+            font-weight: 500; 
+            color: var(--color-texto-principal);
+        }
+        
         .dia-marcador-ingreso, .dia-marcador-gasto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; margin-right: 2px; }
         .dia-marcador-ingreso { background-color: var(--color-primario); }
         .dia-marcador-gasto { background-color: var(--color-gasto); }
@@ -434,7 +450,7 @@
         #modal-lista .monto-ingreso { color: var(--color-primario); font-weight: 600; }
         #modal-lista .monto-gasto { color: var(--color-gasto); font-weight: 600; }
 
-        /* Estilos para Menú Lateral */
+        /* --- Estilos para Menú Lateral --- */
         #menu-overlay {
             position: fixed;
             top: 0;
@@ -501,6 +517,25 @@
             margin-top: 0;
         }
         
+        .menu-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--color-input);
+            color: var(--color-texto-secundario);
+            border: 1px solid var(--color-borde);
+            border-radius: 4px;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-bottom: 10px;
+        }
+        .menu-button:hover {
+            background-color: var(--color-borde);
+        }
+
         .theme-switcher {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -521,6 +556,40 @@
             border-color: var(--color-secundario);
             color: var(--color-secundario-texto);
             background-color: var(--color-secundario);
+        }
+        
+        /* --- Estilos para Vista 6 Meses --- */
+        #seccion-evolucion-6meses {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-fondo);
+            z-index: 1001;
+            display: none; /* Oculto por defecto */
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: background-color 0.3s ease;
+        }
+        #seccion-evolucion-6meses .app-header {
+            justify-content: space-between; 
+        }
+        #seccion-evolucion-6meses #btn-volver-app {
+            background: none;
+            border: none;
+            color: var(--color-texto-principal);
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+        #evolucion-6meses-container {
+            width: 100%;
+            height: calc(100% - 100px); /* Restar espacio para el header */
+            position: relative;
+            margin-top: 20px;
         }
         
     </style>
@@ -574,13 +643,16 @@
             <div class="vista-toggle">
                 <button id="btn-ver-resumen" class="active">Resumen</button>
                 <button id="btn-ver-grafico">Gráfico</button>
+                <button id="btn-ver-evolucion-mensual">Actividad Diaria</button> 
                 <button id="btn-ver-calendario">Calendario</button>
             </div>
             
             <div class="resumen-grid" id="resumen-totales">
                 </div>
             
-            <div id="grafico-container" style="display: none;"><canvas id="grafico-torta"></canvas></div>
+            <div id="grafico-container"><canvas id="grafico-torta"></canvas></div>
+            <div id="evolucion-mensual-container"><canvas id="grafico-evolucion-mensual"></canvas></div> 
+            
             <div id="calendario-container" style="display: none;"></div>
 
             <h2>Historial del Mes</h2>
@@ -604,7 +676,9 @@
             <button id="btn-close-menu" title="Cerrar">&times;</button>
         </div>
         
-        <h2>Temas de Color</h2>
+        <button id="btn-ver-evolucion-6meses" class="menu-button">Evolución (6 Meses)</button>
+        
+        <h2 style="margin-top: 20px;">Temas de Color</h2>
         <div class="theme-switcher">
             <button data-theme="default" id="theme-default">Oscuro</button>
             <button data-theme="light" id="theme-light">Claro</button>
@@ -620,6 +694,20 @@
         </div>
         
     </nav>
+    
+    <div id="seccion-evolucion-6meses">
+        <div class="app-header">
+            <div class="app-header-logo">
+                <h1>Evolución (6 Meses)</h1>
+            </div>
+            <button id="btn-volver-app" title="Volver">&times;</button>
+        </div>
+        <div id="evolucion-6meses-container">
+            <canvas id="grafico-evolucion-6meses"></canvas>
+        </div>
+    </div>
+
+
     <script>
         
         // =======================================
@@ -647,6 +735,8 @@
         let vistaActual = 'resumen';
         let vistaFormularioActual = 'transaccion'; 
         let miGraficoDeTorta = null;
+        let miGraficoEvolucionDiaria = null; // !MODIFICADO!
+        let miGraficoEvolucion6Meses = null; 
         let temaActual = 'default'; 
         
         const COLORES_CLASIF = {
@@ -694,6 +784,15 @@
         const sideMenu = document.getElementById('side-menu');
         const menuOverlay = document.getElementById('menu-overlay');
         const themeButtons = document.querySelectorAll('.theme-switcher button');
+        
+        const btnVerEvolucionDiaria = document.getElementById('btn-ver-evolucion-mensual'); 
+        const evolucionDiariaContainer = document.getElementById('evolucion-mensual-container'); 
+        const evolucionDiariaCanvas = document.getElementById('grafico-evolucion-mensual'); 
+        
+        const btnVerEvolucion6Meses = document.getElementById('btn-ver-evolucion-6meses');
+        const seccionEvolucion6Meses = document.getElementById('seccion-evolucion-6meses');
+        const evolucion6MesesCanvas = document.getElementById('grafico-evolucion-6meses');
+        const btnVolverApp = document.getElementById('btn-volver-app');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
@@ -730,6 +829,7 @@
             btnVerResumen.addEventListener('click', () => cambiarVista('resumen'));
             btnVerGrafico.addEventListener('click', () => cambiarVista('grafico'));
             btnVerCalendario.addEventListener('click', () => cambiarVista('calendario'));
+            btnVerEvolucionDiaria.addEventListener('click', () => cambiarVista('evolucionDiaria'));
             formClasificador.addEventListener('change', manejarCambioClasificador);
             btnGuardarPresupuesto.addEventListener('click', guardarPresupuesto); 
             
@@ -754,6 +854,10 @@
             btnMenu.addEventListener('click', abrirMenu);
             btnCloseMenu.addEventListener('click', cerrarMenu);
             menuOverlay.addEventListener('click', cerrarMenu);
+            
+            // Listeners para Vista 6 Meses
+            btnVerEvolucion6Meses.addEventListener('click', mostrarVistaEvolucion6Meses);
+            btnVolverApp.addEventListener('click', ocultarVistaEvolucion6Meses);
             
             // Listeners para Temas
             themeButtons.forEach(button => {
@@ -814,6 +918,24 @@
                 menuOverlay.style.display = 'none';
             }, 300); 
         }
+
+        // --- FUNCIONES VISTA 6 MESES ---
+        function mostrarVistaEvolucion6Meses() {
+            cerrarMenu();
+            document.querySelector('.container').style.display = 'none';
+            seccionEvolucion6Meses.style.display = 'block';
+            renderizarGraficoEvolucion6Meses();
+        }
+
+        function ocultarVistaEvolucion6Meses() {
+            seccionEvolucion6Meses.style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+            if (miGraficoEvolucion6Meses) {
+                miGraficoEvolucion6Meses.destroy();
+                miGraficoEvolucion6Meses = null;
+            }
+        }
+
         
         // --- FUNCIONES DE TEMAS ---
         function aplicarTema(tema) {
@@ -834,8 +956,41 @@
             temaActual = tema;
             guardarDatosEnLocalStorage();
             
+            // Forzar actualización de gráficos si están visibles
             if (vistaActual === 'grafico') {
                 renderizarGrafico();
+            } else if (vistaActual === 'evolucionDiaria') {
+                renderizarGraficoEvolucionDiaria();
+            }
+            
+            if (seccionEvolucion6Meses.style.display === 'block') {
+                renderizarGraficoEvolucion6Meses();
+            }
+        }
+
+        // --- FUNCIONES DE AYUDA DE COLORES (para gráficos) ---
+        function obtenerColoresTema() {
+            const bodyStyles = getComputedStyle(document.body);
+            return {
+                textoPrincipal: bodyStyles.getPropertyValue('--color-texto-principal').trim(),
+                textoSecundario: bodyStyles.getPropertyValue('--color-texto-secundario').trim(),
+                primario: bodyStyles.getPropertyValue('--color-primario').trim(),
+                gasto: bodyStyles.getPropertyValue('--color-gasto').trim(),
+                tarjeta: bodyStyles.getPropertyValue('--color-tarjeta').trim(),
+                ahorro: bodyStyles.getPropertyValue('--color-ahorro').trim(),
+                otro: bodyStyles.getPropertyValue('--color-otro').trim(),
+                borde: bodyStyles.getPropertyValue('--color-borde').trim(),
+                fondoInput: bodyStyles.getPropertyValue('--color-input').trim()
+            };
+        }
+
+        function obtenerColorClasificador(clasificador, colores) {
+            switch(clasificador) {
+                case 'INGRESO': return colores.primario;
+                case 'GASTO': return colores.gasto;
+                case 'TARJETA': return colores.tarjeta;
+                case 'AHORRO': return colores.ahorro;
+                default: return COLORES_CLASIF[clasificador] || colores.otro; 
             }
         }
 
@@ -1062,9 +1217,11 @@
             
             resumenTotalesDiv.style.display = 'none';
             graficoContainer.style.display = 'none';
+            evolucionDiariaContainer.style.display = 'none'; 
             calendarioContainer.style.display = 'none';
             btnVerResumen.classList.remove('active');
             btnVerGrafico.classList.remove('active');
+            btnVerEvolucionDiaria.classList.remove('active'); 
             btnVerCalendario.classList.remove('active');
             
             if (vistaActual === 'resumen') {
@@ -1075,6 +1232,10 @@
                 btnVerGrafico.classList.add('active');
                 graficoContainer.style.display = 'block';
                 renderizarGrafico();
+            } else if (vistaActual === 'evolucionDiaria') { 
+                btnVerEvolucionDiaria.classList.add('active');
+                evolucionDiariaContainer.style.display = 'block';
+                renderizarGraficoEvolucionDiaria();
             } else if (vistaActual === 'calendario') {
                 btnVerCalendario.classList.add('active');
                 calendarioContainer.style.display = 'grid';
@@ -1210,25 +1371,10 @@
         }
         
         
-        // ! ===================================================
-        // ! FUNCIÓN DE GRÁFICO CORREGIDA
-        // ! ===================================================
         function renderizarGrafico() {
             if (miGraficoDeTorta) miGraficoDeTorta.destroy();
             
-            // Obtener colores del tema actual
-            const bodyStyles = getComputedStyle(document.body);
-            const colorTextoPrincipal = bodyStyles.getPropertyValue('--color-texto-principal').trim();
-            const colorTextoSecundario = bodyStyles.getPropertyValue('--color-texto-secundario').trim();
-            const colorFondoInput = bodyStyles.getPropertyValue('--color-input').trim();
-            const colorBorde = bodyStyles.getPropertyValue('--color-borde').trim();
-            
-            // Obtener valores de colores para el gráfico
-            const colorGasto = bodyStyles.getPropertyValue('--color-gasto').trim();
-            const colorTarjeta = bodyStyles.getPropertyValue('--color-tarjeta').trim();
-            const colorAhorro = bodyStyles.getPropertyValue('--color-ahorro').trim();
-            const colorOtro = bodyStyles.getPropertyValue('--color-otro').trim();
-
+            const colores = obtenerColoresTema();
 
             const datosMes = getDatosMesActual();
             const sumasGastos = {};
@@ -1247,7 +1393,7 @@
             if (totalGastos === 0) {
                  ctx.clearRect(0, 0, graficoCanvas.width, graficoCanvas.height);
                  ctx.save();
-                 ctx.fillStyle = colorTextoSecundario; 
+                 ctx.fillStyle = colores.textoSecundario; 
                  ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'; 
                  ctx.textAlign = 'center';
                  ctx.fillText('No hay gastos para mostrar.', graficoCanvas.width / 2, graficoCanvas.height / 2);
@@ -1258,16 +1404,7 @@
             const labels = Object.keys(sumasGastos);
             const data = Object.values(sumasGastos);
 
-            // !CORREGIDO! Asignar los valores de color computados, no las variables CSS
-            const backgroundColors = labels.map(label => {
-                switch(label) {
-                    case 'GASTO': return colorGasto;
-                    case 'TARJETA': return colorTarjeta;
-                    case 'AHORRO': return colorAhorro;
-                    // Para clasificadores nuevos, busca en el objeto original o usa 'otro'
-                    default: return COLORES_CLASIF[label] || colorOtro; 
-                }
-            });
+            const backgroundColors = labels.map(label => obtenerColorClasificador(label, colores));
 
             miGraficoDeTorta = new Chart(ctx, {
                 type: 'pie',
@@ -1296,7 +1433,7 @@
                         title: {
                             display: true,
                             text: 'Distribución de Gastos del Mes',
-                            color: colorTextoPrincipal, 
+                            color: colores.textoPrincipal, 
                             font: {
                                 size: 18,
                                 weight: 'bold',
@@ -1310,7 +1447,7 @@
                         legend: {
                             position: 'bottom', 
                             labels: {
-                                color: colorTextoSecundario, 
+                                color: colores.textoSecundario, 
                                 font: {
                                     size: 14,
                                     family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
@@ -1328,10 +1465,10 @@
                                     return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
                                 }
                             },
-                            backgroundColor: colorFondoInput, 
-                            titleColor: colorTextoPrincipal,      
-                            bodyColor: colorTextoSecundario,       
-                            borderColor: colorBorde,     
+                            backgroundColor: colores.fondoInput, 
+                            titleColor: colores.textoPrincipal,      
+                            bodyColor: colores.textoSecundario,       
+                            borderColor: colores.borde,     
                             borderWidth: 1,
                             cornerRadius: 4,
                             padding: 10
@@ -1340,6 +1477,231 @@
                 }
             });
         }
+        
+        // ! ===================================================
+        // ! FUNCIÓN DE GRÁFICO (REESCRITA A BARRAS HORIZONTALES)
+        // ! ===================================================
+        function renderizarGraficoEvolucionDiaria() {
+            if (miGraficoEvolucionDiaria) miGraficoEvolucionDiaria.destroy();
+
+            // 1. Obtener colores del tema
+            const colores = obtenerColoresTema();
+            
+            // 2. Calcular datos para el mes seleccionado
+            const [anio, mes] = mesSeleccionado.split('-').map(Number);
+            const diasEnElMes = new Date(anio, mes, 0).getDate();
+            
+            const labels = [];
+            const datasetsData = new Map(); // Usamos un Map para construir los datasets
+            
+            // 3. Preparar etiquetas (Días del mes) y datasets
+            for (let dia = 1; dia <= diasEnElMes; dia++) {
+                labels.push(dia); // Etiquetas para el eje Y: 1, 2, 3...
+            }
+            
+            // Inicializar datasets para todos los clasificadores
+            for (const clasif of clasificadores) {
+                datasetsData.set(clasif, {
+                    label: clasif,
+                    data: new Array(diasEnElMes).fill(0),
+                    backgroundColor: obtenerColorClasificador(clasif, colores)
+                });
+            }
+            
+            // 4. Llenar los datos
+            const transaccionesMes = getDatosMesActual();
+            for (const t of transaccionesMes) {
+                const dia = new Date(t.date + 'T12:00:00').getDate();
+                const diaIndex = dia - 1; // Posición en el array
+                
+                // Asegurarse de que el dataset exista (por si se agregó un clasif nuevo y no está en 'clasificadores')
+                if (!datasetsData.has(t.clasificador)) {
+                    datasetsData.set(t.clasificador, {
+                        label: t.clasificador,
+                        data: new Array(diasEnElMes).fill(0),
+                        backgroundColor: obtenerColorClasificador(t.clasificador, colores)
+                    });
+                }
+                
+                // Convertir gastos a negativos, ingresos a positivos
+                const monto = t.clasificador === 'INGRESO' ? t.monto : -t.monto;
+                datasetsData.get(t.clasificador).data[diaIndex] += monto;
+            }
+
+            // 5. Convertir el Map a un Array de datasets (solo los que tienen datos)
+            const datasets = Array.from(datasetsData.values()).filter(d => 
+                d.data.some(valor => valor !== 0) // Solo mostrar clasificadores con movimiento
+            );
+
+            // 6. Renderizar el gráfico de barras horizontal
+            const ctx = evolucionDiariaCanvas.getContext('2d');
+            miGraficoEvolucionDiaria = new Chart(ctx, {
+                type: 'bar', // Tipo barra
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    indexAxis: 'y', // !NUEVO! Eje Y = Día, Eje X = Saldo
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Actividad Diaria por Categoría',
+                            color: colores.textoPrincipal,
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: colores.textoSecundario }
+                        },
+                        tooltip: {
+                            backgroundColor: colores.fondoInput,
+                            titleColor: colores.textoPrincipal,
+                            bodyColor: colores.textoSecundario,
+                            borderColor: colores.borde,
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                            padding: 10,
+                            callbacks: {
+                                title: (context) => `Día ${context[0].label}`,
+                                label: (context) => {
+                                    const label = context.dataset.label || '';
+                                    const valor = context.parsed.x; // 'x' porque es horizontal
+                                    return `${label}: $${valor.toLocaleString('es-AR')}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { // Eje de Monto
+                            stacked: true, // Apilar en el eje X
+                            title: { display: true, text: 'Monto ($)', color: colores.textoSecundario },
+                            ticks: { color: colores.textoSecundario },
+                            grid: { color: colores.borde }
+                        },
+                        y: { // Eje de Días
+                            stacked: true, // Apilar en el eje Y
+                            title: { display: true, text: 'Día del Mes', color: colores.textoSecundario },
+                            ticks: { color: colores.textoSecundario },
+                            grid: { display: false } // Menos líneas
+                        }
+                    }
+                }
+            });
+        }
+        
+        // FUNCIÓN DE GRÁFICO 6 MESES
+        function renderizarGraficoEvolucion6Meses() {
+            if (miGraficoEvolucion6Meses) miGraficoEvolucion6Meses.destroy();
+
+            const colores = obtenerColoresTema();
+            
+            const labels = [];
+            const datasetsData = {}; 
+            const clasificadoresEnPeriodo = new Set(); 
+            
+            const hoy = new Date(); 
+
+            for (let i = 5; i >= 0; i--) { 
+                const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+                const anio = fecha.getFullYear();
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const key = `${anio}-${mes}`;
+                
+                const label = `${NOMBRES_MESES[fecha.getMonth()]} '${anio.toString().slice(-2)}`;
+                labels.push(label);
+
+                const transaccionesMes = transacciones[key] || [];
+                const sumasMes = {};
+                
+                for (const t of transaccionesMes) {
+                    sumasMes[t.clasificador] = (sumasMes[t.clasificador] || 0) + t.monto;
+                    clasificadoresEnPeriodo.add(t.clasificador); 
+                }
+                
+                for (const clasif of clasificadores) { // Usamos todos los clasificadores
+                    if (!datasetsData[clasif]) {
+                        datasetsData[clasif] = new Array(5 - i).fill(0); 
+                    }
+                    datasetsData[clasif].push(sumasMes[clasif] || 0);
+                }
+            }
+            
+             for (const clasif of clasificadores) {
+                 if(datasetsData[clasif]) {
+                    while (datasetsData[clasif].length < 6) {
+                        datasetsData[clasif].unshift(0);
+                    }
+                 }
+             }
+
+            const datasets = [];
+            
+            // Ordenar para que "INGRESO" salga primero
+            const clasificadoresOrdenados = ['INGRESO', ...Array.from(clasificadores).filter(c => c !== 'INGRESO').sort()];
+
+            for (const clasificador of clasificadoresOrdenados) {
+                // Solo agregar si tuvo datos en el período
+                if (clasificadoresEnPeriodo.has(clasificador)) {
+                    const color = obtenerColorClasificador(clasificador, colores);
+                    datasets.push({
+                        label: clasificador,
+                        data: datasetsData[clasificador],
+                        borderColor: color,
+                        backgroundColor: `${color}33`,
+                        fill: 'start',
+                        tension: 0.1
+                    });
+                }
+            }
+
+            const ctx = evolucion6MesesCanvas.getContext('2d');
+            miGraficoEvolucion6Meses = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Evolución de Movimientos (Últimos 6 Meses)',
+                            color: colores.textoPrincipal,
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'bottom', 
+                            labels: { color: colores.textoSecundario }
+                        },
+                        tooltip: {
+                            backgroundColor: colores.fondoInput,
+                            titleColor: colores.textoPrincipal,
+                            bodyColor: colores.textoSecundario,
+                            borderColor: colores.borde,
+                            borderWidth: 1,
+                            cornerRadius: 4,
+                            padding: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: colores.textoSecundario },
+                            grid: { color: colores.borde }
+                        },
+                        y: {
+                            ticks: { color: colores.textoSecundario },
+                            grid: { color: colores.borde }
+                        }
+                    }
+                }
+            });
+        }
+
         
         function renderizarCalendario() {
             calendarioContainer.innerHTML = '';
