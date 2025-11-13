@@ -445,7 +445,6 @@
         #modal-close:hover { color: var(--color-texto-principal); }
         #modal-titulo { margin-top: 0; border-bottom: 1px solid var(--color-borde); padding-bottom: 10px; transition: border-color 0.3s ease; }
         
-        /* !NUEVO! Estilos para contenido de Alerta/Confirmación */
         #modal-texto {
             font-size: 16px;
             line-height: 1.5;
@@ -476,7 +475,6 @@
             color: var(--color-texto-secundario);
             border: 1px solid var(--color-borde);
         }
-        /* Fin estilos de Alerta */
 
         #modal-lista { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
         #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-borde); transition: border-color 0.3s ease; }
@@ -591,8 +589,8 @@
             background-color: var(--color-secundario);
         }
         
-        /* --- Estilos para Vista 6 Meses --- */
-        #seccion-evolucion-6meses {
+        /* --- Estilos para Vista 6 Meses y Metas --- */
+        #seccion-evolucion-6meses, #seccion-metas {
             position: fixed;
             top: 0;
             left: 0;
@@ -606,10 +604,10 @@
             overflow-y: auto;
             transition: background-color 0.3s ease;
         }
-        #seccion-evolucion-6meses .app-header {
+        #seccion-evolucion-6meses .app-header, #seccion-metas .app-header {
             justify-content: space-between; 
         }
-        #seccion-evolucion-6meses #btn-volver-app {
+        #seccion-evolucion-6meses #btn-volver-app, #seccion-metas #btn-volver-app-metas {
             background: none;
             border: none;
             color: var(--color-texto-principal);
@@ -624,6 +622,52 @@
             position: relative;
             margin-top: 20px;
         }
+        
+        /* Estilos para Tarjetas de Metas */
+        .meta-card {
+            background-color: var(--color-fondo-container-solido);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--color-borde);
+            margin-bottom: 15px;
+        }
+        .meta-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: var(--color-texto-principal);
+        }
+        .meta-card .meta-montos {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .meta-card .meta-montos .ahorrado {
+            font-weight: bold;
+            color: var(--color-ahorro);
+        }
+        .meta-card .meta-montos .objetivo {
+            color: var(--color-texto-secundario);
+        }
+        .meta-card .meta-fecha-limite {
+            font-size: 0.9em;
+            color: var(--color-texto-secundario);
+            margin-top: 15px;
+        }
+        /* Estilos para metas archivadas */
+        .meta-card.completada {
+            border-left: 5px solid var(--color-primario);
+        }
+        .meta-card.expirada {
+            border-left: 5px solid var(--color-gasto);
+        }
+        .meta-card .meta-estado {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        .meta-card.completada .meta-estado { color: var(--color-primario); }
+        .meta-card.expirada .meta-estado { color: var(--color-gasto); }
+        
         
         /* --- Media Queries para Responsive (Móvil) --- */
         @media (max-width: 768px) {
@@ -681,6 +725,14 @@
             .vista-toggle button {
                 font-size: 11px; /* Más chico para que quepan 4 */
                 padding: 10px 4px;
+            }
+            
+            /* Ajustar vista 6 meses en móvil */
+            #seccion-evolucion-6meses, #seccion-metas {
+                padding: 10px;
+            }
+            #evolucion-6meses-container {
+                height: calc(100% - 80px);
             }
         }
         
@@ -777,6 +829,7 @@
             <button id="btn-close-menu" title="Cerrar">&times;</button>
         </div>
         
+        <button id="btn-ver-metas" class="menu-button">Mis Metas</button>
         <button id="btn-ver-evolucion-6meses" class="menu-button">Evolución (6 Meses)</button>
         
         <h2 style="margin-top: 20px;">Temas de Color</h2>
@@ -808,6 +861,35 @@
         </div>
     </div>
 
+    <div id="seccion-metas">
+        <div class="app-header">
+            <div class="app-header-logo">
+                <h1>Mis Metas</h1>
+            </div>
+            <button id="btn-volver-app-metas" title="Volver">&times;</button>
+        </div>
+        
+        <h2>Crear Nueva Meta</h2>
+        <div class="formulario" id="form-agregar-meta">
+            <input type="text" id="form-meta-nombre" placeholder="Nombre (ej: Viaje a Brasil)" class="span-2">
+            <input type="number" id="form-meta-monto" placeholder="Monto Objetivo (ej: 500000)">
+            <input type="date" id="form-meta-fecha" class="">
+            <button id="btn-guardar-meta" class="span-2 btn-secundario">Guardar Meta</button>
+        </div>
+        
+        <div class="vista-toggle">
+            <button id="btn-ver-metas-activas" class="active">Metas Activas</button>
+            <button id="btn-ver-metas-archivadas">Metas Archivadas</button>
+        </div>
+        
+        <div id="lista-metas-activas">
+            </div>
+        
+        <div id="lista-metas-archivadas" style="display: none;">
+            </div>
+        
+    </div>
+
 
     <script>
         
@@ -831,6 +913,7 @@
         // --- ESTADO DE LA APLICACIÓN ---
         let transacciones = {}; 
         let presupuestos = {}; 
+        let metas = {}; 
         let clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
         let mesSeleccionado = '';
         let vistaActual = 'resumen';
@@ -897,9 +980,20 @@
         
         const inputFiltroHistorial = document.getElementById('input-filtro-historial');
         
-        // !NUEVO! Elementos del modal genérico
         const modalTexto = document.getElementById('modal-texto');
         const modalBotones = document.getElementById('modal-botones');
+        
+        const btnVerMetas = document.getElementById('btn-ver-metas');
+        const seccionMetas = document.getElementById('seccion-metas');
+        const btnVolverAppMetas = document.getElementById('btn-volver-app-metas');
+        const btnGuardarMeta = document.getElementById('btn-guardar-meta');
+        const formMetaNombre = document.getElementById('form-meta-nombre');
+        const formMetaMonto = document.getElementById('form-meta-monto');
+        const formMetaFecha = document.getElementById('form-meta-fecha');
+        const btnVerMetasActivas = document.getElementById('btn-ver-metas-activas');
+        const btnVerMetasArchivadas = document.getElementById('btn-ver-metas-archivadas');
+        const listaMetasActivas = document.getElementById('lista-metas-activas');
+        const listaMetasArchivadas = document.getElementById('lista-metas-archivadas');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
@@ -907,6 +1001,7 @@
             localStorage.setItem('misFinanzas_transacciones', JSON.stringify(transacciones));
             localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(Array.from(clasificadores)));
             localStorage.setItem('misFinanzas_presupuestos', JSON.stringify(presupuestos)); 
+            localStorage.setItem('misFinanzas_metas', JSON.stringify(metas)); 
             localStorage.setItem('misFinanzas_tema', temaActual); 
             console.log("Datos guardados.");
         }
@@ -915,11 +1010,13 @@
             const transGuardadas = localStorage.getItem('misFinanzas_transacciones');
             const clasifGuardados = localStorage.getItem('misFinanzas_clasificadores');
             const presupGuardados = localStorage.getItem('misFinanzas_presupuestos'); 
+            const metasGuardadas = localStorage.getItem('misFinanzas_metas'); 
             const temaGuardado = localStorage.getItem('misFinanzas_tema'); 
 
             transacciones = transGuardadas ? JSON.parse(transGuardadas) : {};
             clasificadores = clasifGuardados ? new Set(JSON.parse(clasifGuardados)) : new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
             presupuestos = presupGuardados ? JSON.parse(presupGuardados) : {};
+            metas = metasGuardadas ? JSON.parse(metasGuardadas) : {}; 
             temaActual = temaGuardado ? temaGuardado : 'default'; 
             
             console.log("Datos cargados.");
@@ -940,15 +1037,17 @@
             formClasificador.addEventListener('change', manejarCambioClasificador);
             btnGuardarPresupuesto.addEventListener('click', guardarPresupuesto); 
             
+            // !NUEVO! Listener para el cambio de fecha de transacción
+            formDate.addEventListener('change', actualizarSelectClasificadores);
+            
             // Listeners para Toggle de Formularios
             btnVerFormTransaccion.addEventListener('click', () => cambiarVistaFormulario('transaccion'));
             btnVerFormPresupuesto.addEventListener('click', () => cambiarVistaFormulario('presupuesto'));
 
             // Listeners del Modal
-            modalCloseBtn.addEventListener('click', cerrarModal);
             modalContainer.addEventListener('click', (e) => {
                 if (e.target === modalContainer) {
-                    cerrarModal();
+                    modalCloseBtn.click(); 
                 }
             });
             
@@ -966,6 +1065,13 @@
             btnVerEvolucion6Meses.addEventListener('click', mostrarVistaEvolucion6Meses);
             btnVolverApp.addEventListener('click', ocultarVistaEvolucion6Meses);
             
+            // Listeners para Vista Metas
+            btnVerMetas.addEventListener('click', mostrarVistaMetas);
+            btnVolverAppMetas.addEventListener('click', ocultarVistaMetas);
+            btnGuardarMeta.addEventListener('click', guardarMeta);
+            btnVerMetasActivas.addEventListener('click', () => cambiarVistaMetas('activas'));
+            btnVerMetasArchivadas.addEventListener('click', () => cambiarVistaMetas('archivadas'));
+            
             // Listeners para Temas
             themeButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -980,11 +1086,14 @@
 
             // Preparar la app
             popularSelectorDeMes();
-            actualizarSelectClasificadores();
-            actualizarSelectPresupuesto(); 
             
             mesSeleccionado = selectMes.value;
             formDate.value = new Date().toISOString().split('T')[0];
+            
+            // Cargar selectores DESPUÉS de que formDate tenga valor
+            actualizarSelectClasificadores();
+            actualizarSelectPresupuesto(); 
+            
             actualizarUI();
             cambiarVistaFormulario('transaccion'); 
         });
@@ -1046,6 +1155,146 @@
             }
         }
 
+        // --- FUNCIONES VISTA METAS ---
+        function mostrarVistaMetas() {
+            cerrarMenu();
+            document.querySelector('.container').style.display = 'none';
+            seccionMetas.style.display = 'block';
+            formMetaFecha.value = new Date().toISOString().split('T')[0];
+            cambiarVistaMetas('activas'); 
+        }
+
+        function ocultarVistaMetas() {
+            seccionMetas.style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+        }
+
+        function cambiarVistaMetas(vista) {
+            if (vista === 'activas') {
+                btnVerMetasActivas.classList.add('active');
+                btnVerMetasArchivadas.classList.remove('active');
+                listaMetasActivas.style.display = 'block';
+                listaMetasArchivadas.style.display = 'none';
+                renderizarMetas('activas');
+            } else {
+                btnVerMetasActivas.classList.remove('active');
+                btnVerMetasArchivadas.classList.add('active');
+                listaMetasActivas.style.display = 'none';
+                listaMetasArchivadas.style.display = 'block';
+                renderizarMetas('archivadas');
+            }
+        }
+
+        function guardarMeta() {
+            const nombre = formMetaNombre.value;
+            const monto = parseFloat(formMetaMonto.value);
+            const fecha = formMetaFecha.value;
+
+            if (!nombre || isNaN(monto) || monto <= 0 || !fecha) {
+                mostrarAlerta("Datos Incompletos", "Por favor, completa nombre, monto y fecha.");
+                return;
+            }
+
+            const id = `meta_${Date.now()}`;
+            const clasifFormateado = nombre.trim().toUpperCase();
+            
+            if (clasificadores.has(clasifFormateado)) {
+                mostrarAlerta("Error", `Ya existe un clasificador o meta con el nombre "${clasifFormateado}". Usa un nombre único.`);
+                return;
+            }
+
+            metas[id] = {
+                id: id,
+                nombre: nombre,
+                clasificador: clasifFormateado,
+                montoObjetivo: monto,
+                fechaLimite: fecha
+            };
+            
+            clasificadores.add(clasifFormateado);
+            actualizarSelectClasificadores();
+            actualizarSelectPresupuesto();
+            
+            guardarDatosEnLocalStorage();
+            renderizarMetas('activas');
+            
+            formMetaNombre.value = '';
+            formMetaMonto.value = '';
+            formMetaFecha.value = new Date().toISOString().split('T')[0];
+        }
+        
+        function calcularProgresoMeta(clasificadorMeta) {
+            let totalAhorrado = 0;
+            for (const mes in transacciones) {
+                for (const t of transacciones[mes]) {
+                    if (t.clasificador === clasificadorMeta) {
+                        totalAhorrado += t.monto;
+                    }
+                }
+            }
+            return totalAhorrado;
+        }
+
+        function renderizarMetas(vista) {
+            const listaContenedor = (vista === 'activas') ? listaMetasActivas : listaMetasArchivadas;
+            listaContenedor.innerHTML = '';
+            
+            const hoy = new Date();
+            hoy.setHours(0,0,0,0); 
+            let hayMetas = false;
+
+            for (const id in metas) {
+                const meta = metas[id];
+                const fechaLimite = new Date(meta.fechaLimite + 'T12:00:00');
+                const totalAhorrado = calcularProgresoMeta(meta.clasificador);
+                const porcentaje = Math.min((totalAhorrado / meta.montoObjetivo) * 100, 100);
+                
+                const esActiva = fechaLimite >= hoy;
+
+                if ((vista === 'activas' && !esActiva) || (vista === 'archivadas' && esActiva)) {
+                    continue; 
+                }
+                
+                hayMetas = true;
+                const card = document.createElement('div');
+                let estadoHTML = '';
+                
+                if (vista === 'archivadas') {
+                    if (totalAhorrado >= meta.montoObjetivo) {
+                        card.className = 'meta-card completada';
+                        estadoHTML = `<div classclass="meta-estado" style="color: var(--color-primario);">¡Meta Completada!</div>`;
+                    } else {
+                        card.className = 'meta-card expirada';
+                        estadoHTML = `<div class="meta-estado" style="color: var(--color-gasto);">Meta Expirada</div>`;
+                    }
+                } else {
+                    card.className = 'meta-card';
+                }
+
+                card.innerHTML = `
+                    <h3>${meta.nombre}</h3>
+                    <div class="meta-montos">
+                        <span class="ahorrado">$${totalAhorrado.toLocaleString('es-AR')}</span>
+                        <span class="objetivo"> de $${meta.montoObjetivo.toLocaleString('es-AR')}</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${porcentaje}%; background-color: var(--color-ahorro);"></div>
+                    </div>
+                    <div class="meta-fecha-limite">
+                        Fecha límite: ${meta.fechaLimite.split('-').reverse().join('/')}
+                    </div>
+                    ${estadoHTML}
+                `;
+                listaContenedor.appendChild(card);
+            }
+
+            if (!hayMetas) {
+                listaContenedor.innerHTML = `<p style="color: var(--color-texto-secundario); font-style: italic; padding: 15px 5px;">No hay metas en esta sección.</p>`;
+            }
+        }
+        
+        // --- FIN FUNCIONES METAS ---
+
         
         // --- FUNCIONES DE TEMAS ---
         function aplicarTema(tema) {
@@ -1066,7 +1315,6 @@
             temaActual = tema;
             guardarDatosEnLocalStorage();
             
-            // Forzar actualización de gráficos si están visibles
             if (vistaActual === 'grafico') {
                 renderizarGrafico();
             } else if (vistaActual === 'evolucionDiaria') {
@@ -1095,11 +1343,16 @@
         }
 
         function obtenerColorClasificador(clasificador, colores) {
+            const metaNombres = Object.values(metas).map(m => m.clasificador);
+            if (metaNombres.includes(clasificador)) {
+                return colores.ahorro;
+            }
+            
             switch(clasificador) {
                 case 'INGRESO': return colores.primario;
                 case 'GASTO': return colores.gasto;
                 case 'TARJETA': return colores.tarjeta;
-                case 'AHORRO': return colores.ahorro;
+                case 'AHORRO': return colores.ahorro; // Ahorro genérico
                 default: return COLORES_CLASIF[clasificador] || colores.otro; 
             }
         }
@@ -1171,7 +1424,6 @@
             const motivo = formMotivo.value;
             let clasificador = formClasificador.value; 
 
-            // !MODIFICADO!
             if (!date) { 
                 mostrarAlerta("Datos Incompletos", "Por favor, selecciona una fecha."); 
                 return; 
@@ -1206,7 +1458,6 @@
         }
         
         function eliminarTransaccion(idAEliminar) {
-            // !MODIFICADO!
             mostrarConfirmacion("Confirmar Eliminación", "¿Estás seguro de que quieres eliminar esta transacción?", () => {
                 const datosMes = getDatosMesActual();
                 const index = datosMes.findIndex(t => t.id === idAEliminar);
@@ -1225,13 +1476,34 @@
             formClasificador.value = 'GASTO';
         }
 
+        // !MODIFICADO! Esta función ahora filtra las metas expiradas dinámicamente
         function actualizarSelectClasificadores() {
             const valorPrevio = formClasificador.value; 
             
             formClasificador.innerHTML = ''; 
             const clasificadoresOrdenados = Array.from(clasificadores).sort();
             
+            // !NUEVO! Leer la fecha del formulario de transacción
+            const fechaTransaccion = new Date(formDate.value + 'T12:00:00');
+            
+            const metasExpiradas = new Set();
+            for (const id in metas) {
+                const meta = metas[id];
+                const fechaLimite = new Date(meta.fechaLimite + 'T12:00:00');
+                
+                // Si la fecha límite es anterior a la fecha de la transacción,
+                // se considera expirada para esta transacción.
+                if (fechaLimite < fechaTransaccion) {
+                    metasExpiradas.add(meta.clasificador);
+                }
+            }
+            
             for (let c of clasificadoresOrdenados) {
+                // Condición: No agregar si es una meta expirada
+                if (metasExpiradas.has(c)) {
+                    continue; 
+                }
+
                 const option = document.createElement('option');
                 option.value = c;
                 option.textContent = c;
@@ -1245,9 +1517,11 @@
             optionNueva.style.color = '#555';
             formClasificador.appendChild(optionNueva);
             
-            if (valorPrevio && valorPrevio !== '--NUEVO--') {
+            // Restaurar valor previo si sigue siendo válido
+            if (valorPrevio && valorPrevio !== '--NUEVO--' && !metasExpiradas.has(valorPrevio)) {
                 formClasificador.value = valorPrevio;
             } else {
+                // Si no, seleccionar GASTO o el primero disponible
                 formClasificador.value = clasificadores.has('GASTO') ? 'GASTO' : clasificadoresOrdenados[0]; 
             }
         }
@@ -1261,9 +1535,11 @@
             optionDefault.value = '';
             optionDefault.textContent = 'Selecciona categoría para presupuestar';
             formPresupuestoClasif.appendChild(optionDefault);
+            
+            const metaNombres = Object.values(metas).map(m => m.clasificador);
 
             for (let c of clasificadoresOrdenados) {
-                if (c === 'INGRESO') continue; 
+                if (c === 'INGRESO' || metaNombres.includes(c)) continue; 
                 
                 const option = document.createElement('option');
                 option.value = c;
@@ -1276,7 +1552,6 @@
             const clasificador = formPresupuestoClasif.value;
             const monto = parseFloat(formPresupuestoMonto.value);
 
-            // !MODIFICADO!
             if (!clasificador) {
                 mostrarAlerta("Datos Incompletos", "Por favor, selecciona una categoría.");
                 return;
@@ -1324,7 +1599,6 @@
         }
         
         function eliminarPresupuesto(clasificador) {
-            // !MODIFICADO!
             mostrarConfirmacion("Confirmar Eliminación", `¿Eliminar el presupuesto para "${clasificador}"?`, () => {
                 const key = `${mesSeleccionado}_${clasificador}`;
                 delete presupuestos[key];
@@ -1368,7 +1642,6 @@
             cambiarVistaFormulario(vistaFormularioActual);
         }
 
-        // !MODIFICADO! con lógica de filtro
         function renderizarLista() {
             listaTransacciones.innerHTML = ''; 
             const datosMes = getDatosMesActual();
@@ -1458,6 +1731,9 @@
             }
 
             // --- Tarjetas de Gastos y Presupuestos (El resto) ---
+            const metaNombres = Object.values(metas).map(m => m.clasificador);
+            const colores = obtenerColoresTema();
+            
             for (let clasif in sumas) {
                 if (clasif === 'INGRESO' || sumas[clasif] <= 0) continue; 
                 
@@ -1466,18 +1742,31 @@
                 const presupuestado = presupuestos[keyPresupuesto] || 0;
 
                 const cardGasto = document.createElement('div');
-                cardGasto.className = `resumen-card ${presupuestado > 0 ? 'full-width' : ''}`;
+                // Si tiene presupuesto O es una meta, ocupa todo el ancho
+                const esMeta = metaNombres.includes(clasif);
+                cardGasto.className = `resumen-card ${(presupuestado > 0 || esMeta) ? 'full-width' : ''}`;
                 
-                let colorGasto;
-                switch(clasif) {
-                    case 'GASTO': colorGasto = 'var(--color-gasto)'; break;
-                    case 'TARJETA': colorGasto = 'var(--color-tarjeta)'; break;
-                    case 'AHORRO': colorGasto = 'var(--color-ahorro)'; break;
-                    default: colorGasto = 'var(--color-otro)';
-                }
-                
+                let colorGasto = obtenerColorClasificador(clasif, colores);
                 let contenidoPresupuesto = '';
-                if (presupuestado > 0) {
+                
+                if (esMeta) {
+                    // Es una meta, buscar la meta
+                    const meta = Object.values(metas).find(m => m.clasificador === clasif);
+                    if (meta) {
+                        const totalAhorrado = calcularProgresoMeta(clasif);
+                        const porcentaje = Math.min((totalAhorrado / meta.montoObjetivo) * 100, 100);
+                        contenidoPresupuesto = `
+                        <div class="card-presupuesto-texto">
+                            <span class="monto-gastado">$${totalAhorrado.toLocaleString('es-AR')}</span> de 
+                            <span class="monto-presupuesto">$${meta.montoObjetivo.toLocaleString('es-AR')}</span> (META)
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${porcentaje}%; background-color: ${colorGasto};"></div>
+                        </div>
+                    `;
+                    }
+                } else if (presupuestado > 0) {
+                    // Es un gasto con presupuesto
                     let porcentaje = (gastado / presupuestado) * 100;
                     let barraClass = 'progress-bar';
                     
@@ -1876,17 +2165,17 @@
         
         // --- FUNCIONES PARA EL MODAL ---
         
-        // !MODIFICADO! Cierra y LIMPIA el modal
         function cerrarModal() {
             modalContainer.style.display = 'none';
-            // Limpia el contenido para que no se mezcle
             modalTitulo.innerHTML = '';
             modalTexto.innerHTML = '';
             modalLista.innerHTML = '';
             modalBotones.innerHTML = '';
+            
+            // Restaura el evento onclick del 'x' por si fue sobreescrito
+            modalCloseBtn.onclick = cerrarModal;
         }
         
-        // !MODIFICADO! Muestra el modal en modo "Detalle de Día"
         function mostrarModalDia(dia) {
             const datosDia = getDatosMesActual().filter(t => {
                 return new Date(t.date + 'T12:00:00').getDate() === dia;
@@ -1896,13 +2185,13 @@
             
             modalTitulo.textContent = `Detalles del ${fechaTitulo}`;
             
-            // Ocultar partes de alerta/confirmación
             modalTexto.style.display = 'none';
             modalBotones.style.display = 'none';
-            
-            // Mostrar lista
             modalLista.style.display = 'block';
             modalLista.innerHTML = ''; 
+            
+            // Asigna el onclick correcto para el 'x'
+            modalCloseBtn.onclick = cerrarModal;
             
             if (datosDia.length === 0) {
                 modalLista.innerHTML = '<li>No hay transacciones para este día.</li>';
@@ -1921,12 +2210,10 @@
             modalContainer.style.display = 'flex';
         }
 
-        // !NUEVO! Función para Alertas
         function mostrarAlerta(titulo, mensaje, callbackAceptar = null) {
             modalTitulo.textContent = titulo;
             modalTexto.innerHTML = mensaje;
             
-            // Ocultar lista, mostrar texto y botones
             modalLista.style.display = 'none';
             modalTexto.style.display = 'block';
             modalBotones.style.display = 'flex';
@@ -1935,25 +2222,21 @@
             
             const btnAceptar = document.getElementById('modal-btn-aceptar');
             
-            btnAceptar.onclick = () => {
+            const onAceptar = () => {
                 if (callbackAceptar) callbackAceptar();
                 cerrarModal();
             };
             
-            modalCloseBtn.onclick = () => { // El 'x' también funciona como aceptar
-                 if (callbackAceptar) callbackAceptar();
-                 cerrarModal();
-            };
+            btnAceptar.addEventListener('click', onAceptar, { once: true });
+            modalCloseBtn.onclick = onAceptar;
             
             modalContainer.style.display = 'flex';
         }
         
-        // !NUEVO! Función para Confirmaciones
         function mostrarConfirmacion(titulo, mensaje, callbackSi, callbackNo = null) {
             modalTitulo.textContent = titulo;
             modalTexto.innerHTML = mensaje;
 
-            // Ocultar lista, mostrar texto y botones
             modalLista.style.display = 'none';
             modalTexto.style.display = 'block';
             modalBotones.style.display = 'flex';
@@ -1966,18 +2249,18 @@
             const btnConfirmar = document.getElementById('modal-btn-confirmar');
             const btnCancelar = document.getElementById('modal-btn-cancelar');
             
-            btnConfirmar.onclick = () => {
+            btnConfirmar.addEventListener('click', () => {
                 if(callbackSi) callbackSi();
                 cerrarModal();
-            };
+            }, { once: true });
             
             const onCancel = () => {
                 if(callbackNo) callbackNo();
                 cerrarModal();
             };
             
-            btnCancelar.onclick = onCancel;
-            modalCloseBtn.onclick = onCancel; // El 'x' funciona como cancelar
+            btnCancelar.addEventListener('click', onCancel, { once: true });
+            modalCloseBtn.onclick = onCancel;
             
             modalContainer.style.display = 'flex';
         }
@@ -1990,7 +2273,8 @@
             const backupDatos = {
                 transacciones: transacciones,
                 presupuestos: presupuestos,
-                clasificadores: Array.from(clasificadores) 
+                clasificadores: Array.from(clasificadores),
+                metas: metas 
             };
             
             const dataStr = JSON.stringify(backupDatos, null, 2); 
@@ -2000,7 +2284,7 @@
             a.href = url;
             
             const fechaHoy = new Date().toISOString().split('T')[0];
-            a.download = `mis_finanzas_backup_${fechaHoy}.json`;
+            a.download = `track_backup_${fechaHoy}.json`; 
             
             document.body.appendChild(a);
             a.click();
@@ -2008,7 +2292,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            mostrarAlerta("Respaldo Exitoso", "Tu archivo de respaldo se ha descargado."); // !MODIFICADO!
+            mostrarAlerta("Respaldo Exitoso", "Tu archivo de respaldo se ha descargado."); 
             cerrarMenu();
         }
 
@@ -2020,7 +2304,6 @@
             
             const resetInput = () => { event.target.value = null; };
 
-            // !MODIFICADO!
             mostrarConfirmacion("Importar Respaldo",
                 "¡ATENCIÓN! Esto borrará TODOS los datos actuales que tengas en este dispositivo y los reemplazará con los datos del archivo. ¿Continuar?",
                 () => { // Callback SI
@@ -2030,11 +2313,12 @@
                             const text = e.target.result;
                             const data = JSON.parse(text);
                             
-                            if (data.transacciones && data.presupuestos && data.clasificadores) {
+                            if (data.transacciones && data.presupuestos && data.clasificadores && data.metas) {
                                 
                                 transacciones = data.transacciones;
                                 presupuestos = data.presupuestos;
                                 clasificadores = new Set(data.clasificadores);
+                                metas = data.metas; 
                                 
                                 guardarDatosEnLocalStorage();
                                 
@@ -2043,7 +2327,7 @@
                                 });
                                 
                             } else {
-                                mostrarAlerta("Error", "El archivo no parece ser un respaldo válido.");
+                                mostrarAlerta("Error", "El archivo no parece ser un respaldo válido de 'Track'.");
                                 resetInput();
                             }
                         } catch (error) {
@@ -2063,5 +2347,3 @@
     </script>
 </body>
 </html>
-
-
