@@ -356,7 +356,6 @@
             display: none; /* Ocultos por defecto */
         }
         
-        /* !NUEVO! Damos más altura al gráfico de barras horizontal */
         #evolucion-mensual-container {
             height: 600px; /* Más altura para que entren los 31 días */
         }
@@ -372,7 +371,7 @@
         .dia-numero { 
             font-size: 0.9em; 
             font-weight: 500; 
-            color: var(--color-texto-principal);
+            color: var(--color-texto-principal) !important;
         }
         
         .dia-marcador-ingreso, .dia-marcador-gasto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; margin-right: 2px; }
@@ -445,6 +444,40 @@
         #modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; font-weight: bold; color: #aaa; cursor: pointer; }
         #modal-close:hover { color: var(--color-texto-principal); }
         #modal-titulo { margin-top: 0; border-bottom: 1px solid var(--color-borde); padding-bottom: 10px; transition: border-color 0.3s ease; }
+        
+        /* !NUEVO! Estilos para contenido de Alerta/Confirmación */
+        #modal-texto {
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--color-texto-secundario);
+            margin-top: 10px;
+            margin-bottom: 25px;
+            display: none; /* Oculto por defecto */
+        }
+        #modal-botones {
+            display: none; /* Oculto por defecto */
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .modal-btn.primario {
+            background-color: var(--color-primario);
+            color: var(--color-primario-texto);
+        }
+        .modal-btn.secundario {
+            background-color: var(--color-input);
+            color: var(--color-texto-secundario);
+            border: 1px solid var(--color-borde);
+        }
+        /* Fin estilos de Alerta */
+
         #modal-lista { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
         #modal-lista li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-borde); transition: border-color 0.3s ease; }
         #modal-lista .monto-ingreso { color: var(--color-primario); font-weight: 600; }
@@ -592,6 +625,65 @@
             margin-top: 20px;
         }
         
+        /* --- Media Queries para Responsive (Móvil) --- */
+        @media (max-width: 768px) {
+            
+            body {
+                padding: 5px; /* Menos padding en el body */
+            }
+            
+            #seccion-app {
+                padding: 15px;
+            }
+
+            .formulario {
+                grid-template-columns: 1fr;
+            }
+            .formulario .span-2 {
+                grid-column: span 1;
+            }
+            
+            .resumen-grid {
+                grid-template-columns: 1fr;
+            }
+            .resumen-card.full-width {
+                grid-column: span 1; 
+            }
+            .resumen-card .card-monto {
+                font-size: 24px; 
+            }
+
+            .calendario-dia {
+                min-height: 60px;
+                padding: 4px;
+            }
+            .calendario-header {
+                font-size: 0.8em;
+                padding: 6px 0;
+            }
+            
+            #lista-transacciones .detalle {
+                flex-wrap: wrap; 
+            }
+            #lista-transacciones .dia-historial {
+                margin-right: 5px;
+            }
+             #lista-transacciones .clasif {
+                margin-left: 5px;
+                margin-right: 5px;
+            }
+            
+            #modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .vista-toggle button {
+                font-size: 11px; /* Más chico para que quepan 4 */
+                padding: 10px 4px;
+            }
+        }
+        
     </style>
 </head>
 <body class="theme-default"> <div class="container">
@@ -656,6 +748,11 @@
             <div id="calendario-container" style="display: none;"></div>
 
             <h2>Historial del Mes</h2>
+            
+            <div class="formulario" style="margin-bottom: 10px;">
+                <input type="search" id="input-filtro-historial" placeholder="Buscar por motivo o clasificación..." class="span-2">
+            </div>
+            
             <ul id="lista-transacciones"></ul>
         </div>
     </div>
@@ -663,9 +760,13 @@
     <div id="modal-container">
         <div id="modal-content">
             <span id="modal-close">&times;</span>
-            <h3 id="modal-titulo">Detalles del Día</h3>
-            <ul id="modal-lista">
-            </ul>
+            <h3 id="modal-titulo"></h3>
+            
+            <p id="modal-texto"></p>
+            
+            <ul id="modal-lista"></ul>
+            
+            <div id="modal-botones"></div>
         </div>
     </div>
     
@@ -735,7 +836,7 @@
         let vistaActual = 'resumen';
         let vistaFormularioActual = 'transaccion'; 
         let miGraficoDeTorta = null;
-        let miGraficoEvolucionDiaria = null; // !MODIFICADO!
+        let miGraficoEvolucionDiaria = null; 
         let miGraficoEvolucion6Meses = null; 
         let temaActual = 'default'; 
         
@@ -793,6 +894,12 @@
         const seccionEvolucion6Meses = document.getElementById('seccion-evolucion-6meses');
         const evolucion6MesesCanvas = document.getElementById('grafico-evolucion-6meses');
         const btnVolverApp = document.getElementById('btn-volver-app');
+        
+        const inputFiltroHistorial = document.getElementById('input-filtro-historial');
+        
+        // !NUEVO! Elementos del modal genérico
+        const modalTexto = document.getElementById('modal-texto');
+        const modalBotones = document.getElementById('modal-botones');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
@@ -868,6 +975,9 @@
                 });
             });
 
+            // Listener para Filtro Historial
+            inputFiltroHistorial.addEventListener('keyup', renderizarLista);
+
             // Preparar la app
             popularSelectorDeMes();
             actualizarSelectClasificadores();
@@ -887,7 +997,7 @@
                     const clasifFormateado = nuevoClasif.trim().toUpperCase();
                     
                     if (clasificadores.has(clasifFormateado)) {
-                        alert("Esa clasificación ya existe."); 
+                        mostrarAlerta("Atención", "Esa clasificación ya existe."); 
                         formClasificador.value = clasifFormateado; 
                     } else {
                         clasificadores.add(clasifFormateado);
@@ -1021,6 +1131,7 @@
         }
         function cambiarMes() {
             mesSeleccionado = selectMes.value;
+            inputFiltroHistorial.value = ''; 
             actualizarUI();
         }
         
@@ -1060,11 +1171,17 @@
             const motivo = formMotivo.value;
             let clasificador = formClasificador.value; 
 
-            if (!date) { alert("Por favor, selecciona una fecha."); return; }
-            if (isNaN(monto) || monto <= 0 || !motivo) { alert("Por favor, completa el monto y el motivo."); return; }
-            
+            // !MODIFICADO!
+            if (!date) { 
+                mostrarAlerta("Datos Incompletos", "Por favor, selecciona una fecha."); 
+                return; 
+            }
+            if (isNaN(monto) || monto <= 0 || !motivo) { 
+                mostrarAlerta("Datos Incompletos", "Por favor, completa el monto y el motivo."); 
+                return; 
+            }
             if (clasificador === '--NUEVO--') {
-                alert("Por favor, selecciona una clasificación válida antes de agregar.");
+                mostrarAlerta("Datos Incompletos", "Por favor, selecciona una clasificación válida.");
                 return;
             }
 
@@ -1082,19 +1199,23 @@
             selectMes.value = mesDeLaTransaccion;
             mesSeleccionado = mesDeLaTransaccion;
             
+            inputFiltroHistorial.value = ''; 
             actualizarUI();
             limpiarFormulario();
             guardarDatosEnLocalStorage(); 
         }
         
         function eliminarTransaccion(idAEliminar) {
-            if (!confirm("¿Estás seguro de que quieres eliminar esta transacción?")) return;
-            const datosMes = getDatosMesActual();
-            const index = datosMes.findIndex(t => t.id === idAEliminar);
-            if (index > -1) datosMes.splice(index, 1);
-            
-            actualizarUI();
-            guardarDatosEnLocalStorage(); 
+            // !MODIFICADO!
+            mostrarConfirmacion("Confirmar Eliminación", "¿Estás seguro de que quieres eliminar esta transacción?", () => {
+                const datosMes = getDatosMesActual();
+                const index = datosMes.findIndex(t => t.id === idAEliminar);
+                if (index > -1) datosMes.splice(index, 1);
+                
+                inputFiltroHistorial.value = ''; 
+                actualizarUI();
+                guardarDatosEnLocalStorage(); 
+            });
         }
         
         function limpiarFormulario() {
@@ -1155,12 +1276,13 @@
             const clasificador = formPresupuestoClasif.value;
             const monto = parseFloat(formPresupuestoMonto.value);
 
+            // !MODIFICADO!
             if (!clasificador) {
-                alert("Por favor, selecciona una categoría.");
+                mostrarAlerta("Datos Incompletos", "Por favor, selecciona una categoría.");
                 return;
             }
             if (isNaN(monto) || monto < 0) {
-                 alert("Por favor, ingresa un monto válido.");
+                 mostrarAlerta("Datos Incompletos", "Por favor, ingresa un monto válido.");
                 return;
             }
 
@@ -1202,12 +1324,13 @@
         }
         
         function eliminarPresupuesto(clasificador) {
-            if (!confirm(`¿Eliminar el presupuesto para "${clasificador}"?`)) return;
-            
-            const key = `${mesSeleccionado}_${clasificador}`;
-            delete presupuestos[key];
-            guardarDatosEnLocalStorage();
-            actualizarUI();
+            // !MODIFICADO!
+            mostrarConfirmacion("Confirmar Eliminación", `¿Eliminar el presupuesto para "${clasificador}"?`, () => {
+                const key = `${mesSeleccionado}_${clasificador}`;
+                delete presupuestos[key];
+                guardarDatosEnLocalStorage();
+                actualizarUI();
+            });
         }
 
         // --- FUNCIONES DE RENDERIZADO ---
@@ -1245,11 +1368,26 @@
             cambiarVistaFormulario(vistaFormularioActual);
         }
 
+        // !MODIFICADO! con lógica de filtro
         function renderizarLista() {
             listaTransacciones.innerHTML = ''; 
             const datosMes = getDatosMesActual();
             const datosOrdenados = [...datosMes].sort((a, b) => new Date(a.date) - new Date(b.date));
-            for (let t of datosOrdenados) {
+            
+            const terminoBusqueda = inputFiltroHistorial.value.toLowerCase();
+            
+            const datosFiltrados = datosOrdenados.filter(t => {
+                return t.motivo.toLowerCase().includes(terminoBusqueda) ||
+                       t.clasificador.toLowerCase().includes(terminoBusqueda);
+            });
+
+            if (datosFiltrados.length === 0) {
+                const mensaje = terminoBusqueda ? 'No se encontraron transacciones con ese filtro.' : 'No hay transacciones este mes.';
+                listaTransacciones.innerHTML = `<li style="color: var(--color-texto-secundario); font-style: italic; padding: 15px 5px;">${mensaje}</li>`;
+                return;
+            }
+            
+            for (let t of datosFiltrados) {
                 const li = document.createElement('li');
                 let claseColor = `clasif-${t.clasificador}`;
                 if (!['INGRESO', 'GASTO', 'TARJETA', 'AHORRO'].includes(t.clasificador)) {
@@ -1375,7 +1513,6 @@
             if (miGraficoDeTorta) miGraficoDeTorta.destroy();
             
             const colores = obtenerColoresTema();
-
             const datosMes = getDatosMesActual();
             const sumasGastos = {};
             let totalGastos = 0;
@@ -1478,28 +1615,21 @@
             });
         }
         
-        // ! ===================================================
-        // ! FUNCIÓN DE GRÁFICO (REESCRITA A BARRAS HORIZONTALES)
-        // ! ===================================================
         function renderizarGraficoEvolucionDiaria() {
             if (miGraficoEvolucionDiaria) miGraficoEvolucionDiaria.destroy();
 
-            // 1. Obtener colores del tema
             const colores = obtenerColoresTema();
             
-            // 2. Calcular datos para el mes seleccionado
             const [anio, mes] = mesSeleccionado.split('-').map(Number);
             const diasEnElMes = new Date(anio, mes, 0).getDate();
             
             const labels = [];
-            const datasetsData = new Map(); // Usamos un Map para construir los datasets
+            const datasetsData = new Map(); 
             
-            // 3. Preparar etiquetas (Días del mes) y datasets
             for (let dia = 1; dia <= diasEnElMes; dia++) {
-                labels.push(dia); // Etiquetas para el eje Y: 1, 2, 3...
+                labels.push(dia); 
             }
             
-            // Inicializar datasets para todos los clasificadores
             for (const clasif of clasificadores) {
                 datasetsData.set(clasif, {
                     label: clasif,
@@ -1508,13 +1638,11 @@
                 });
             }
             
-            // 4. Llenar los datos
             const transaccionesMes = getDatosMesActual();
             for (const t of transaccionesMes) {
                 const dia = new Date(t.date + 'T12:00:00').getDate();
-                const diaIndex = dia - 1; // Posición en el array
+                const diaIndex = dia - 1; 
                 
-                // Asegurarse de que el dataset exista (por si se agregó un clasif nuevo y no está en 'clasificadores')
                 if (!datasetsData.has(t.clasificador)) {
                     datasetsData.set(t.clasificador, {
                         label: t.clasificador,
@@ -1523,26 +1651,23 @@
                     });
                 }
                 
-                // Convertir gastos a negativos, ingresos a positivos
                 const monto = t.clasificador === 'INGRESO' ? t.monto : -t.monto;
                 datasetsData.get(t.clasificador).data[diaIndex] += monto;
             }
 
-            // 5. Convertir el Map a un Array de datasets (solo los que tienen datos)
             const datasets = Array.from(datasetsData.values()).filter(d => 
-                d.data.some(valor => valor !== 0) // Solo mostrar clasificadores con movimiento
+                d.data.some(valor => valor !== 0) 
             );
 
-            // 6. Renderizar el gráfico de barras horizontal
             const ctx = evolucionDiariaCanvas.getContext('2d');
             miGraficoEvolucionDiaria = new Chart(ctx, {
-                type: 'bar', // Tipo barra
+                type: 'bar', 
                 data: {
                     labels: labels,
                     datasets: datasets
                 },
                 options: {
-                    indexAxis: 'y', // !NUEVO! Eje Y = Día, Eje X = Saldo
+                    indexAxis: 'y', 
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -1568,24 +1693,24 @@
                                 title: (context) => `Día ${context[0].label}`,
                                 label: (context) => {
                                     const label = context.dataset.label || '';
-                                    const valor = context.parsed.x; // 'x' porque es horizontal
+                                    const valor = context.parsed.x; 
                                     return `${label}: $${valor.toLocaleString('es-AR')}`;
                                 }
                             }
                         }
                     },
                     scales: {
-                        x: { // Eje de Monto
-                            stacked: true, // Apilar en el eje X
+                        x: { 
+                            stacked: true, 
                             title: { display: true, text: 'Monto ($)', color: colores.textoSecundario },
                             ticks: { color: colores.textoSecundario },
                             grid: { color: colores.borde }
                         },
-                        y: { // Eje de Días
-                            stacked: true, // Apilar en el eje Y
+                        y: { 
+                            stacked: true, 
                             title: { display: true, text: 'Día del Mes', color: colores.textoSecundario },
                             ticks: { color: colores.textoSecundario },
-                            grid: { display: false } // Menos líneas
+                            grid: { display: false } 
                         }
                     }
                 }
@@ -1639,7 +1764,6 @@
 
             const datasets = [];
             
-            // Ordenar para que "INGRESO" salga primero
             const clasificadoresOrdenados = ['INGRESO', ...Array.from(clasificadores).filter(c => c !== 'INGRESO').sort()];
 
             for (const clasificador of clasificadoresOrdenados) {
@@ -1751,14 +1875,35 @@
         }
         
         // --- FUNCIONES PARA EL MODAL ---
+        
+        // !MODIFICADO! Cierra y LIMPIA el modal
+        function cerrarModal() {
+            modalContainer.style.display = 'none';
+            // Limpia el contenido para que no se mezcle
+            modalTitulo.innerHTML = '';
+            modalTexto.innerHTML = '';
+            modalLista.innerHTML = '';
+            modalBotones.innerHTML = '';
+        }
+        
+        // !MODIFICADO! Muestra el modal en modo "Detalle de Día"
         function mostrarModalDia(dia) {
             const datosDia = getDatosMesActual().filter(t => {
                 return new Date(t.date + 'T12:00:00').getDate() === dia;
             });
             const [anio, mes] = mesSeleccionado.split('-');
             const fechaTitulo = `${dia} de ${NOMBRES_MESES[mes-1]} de ${anio}`;
+            
             modalTitulo.textContent = `Detalles del ${fechaTitulo}`;
+            
+            // Ocultar partes de alerta/confirmación
+            modalTexto.style.display = 'none';
+            modalBotones.style.display = 'none';
+            
+            // Mostrar lista
+            modalLista.style.display = 'block';
             modalLista.innerHTML = ''; 
+            
             if (datosDia.length === 0) {
                 modalLista.innerHTML = '<li>No hay transacciones para este día.</li>';
             } else {
@@ -1775,9 +1920,66 @@
             }
             modalContainer.style.display = 'flex';
         }
+
+        // !NUEVO! Función para Alertas
+        function mostrarAlerta(titulo, mensaje, callbackAceptar = null) {
+            modalTitulo.textContent = titulo;
+            modalTexto.innerHTML = mensaje;
+            
+            // Ocultar lista, mostrar texto y botones
+            modalLista.style.display = 'none';
+            modalTexto.style.display = 'block';
+            modalBotones.style.display = 'flex';
+            
+            modalBotones.innerHTML = '<button class="modal-btn primario" id="modal-btn-aceptar">Aceptar</button>';
+            
+            const btnAceptar = document.getElementById('modal-btn-aceptar');
+            
+            btnAceptar.onclick = () => {
+                if (callbackAceptar) callbackAceptar();
+                cerrarModal();
+            };
+            
+            modalCloseBtn.onclick = () => { // El 'x' también funciona como aceptar
+                 if (callbackAceptar) callbackAceptar();
+                 cerrarModal();
+            };
+            
+            modalContainer.style.display = 'flex';
+        }
         
-        function cerrarModal() {
-            modalContainer.style.display = 'none';
+        // !NUEVO! Función para Confirmaciones
+        function mostrarConfirmacion(titulo, mensaje, callbackSi, callbackNo = null) {
+            modalTitulo.textContent = titulo;
+            modalTexto.innerHTML = mensaje;
+
+            // Ocultar lista, mostrar texto y botones
+            modalLista.style.display = 'none';
+            modalTexto.style.display = 'block';
+            modalBotones.style.display = 'flex';
+
+            modalBotones.innerHTML = `
+                <button class="modal-btn secundario" id="modal-btn-cancelar">Cancelar</button>
+                <button class="modal-btn primario" id="modal-btn-confirmar">Confirmar</button>
+            `;
+            
+            const btnConfirmar = document.getElementById('modal-btn-confirmar');
+            const btnCancelar = document.getElementById('modal-btn-cancelar');
+            
+            btnConfirmar.onclick = () => {
+                if(callbackSi) callbackSi();
+                cerrarModal();
+            };
+            
+            const onCancel = () => {
+                if(callbackNo) callbackNo();
+                cerrarModal();
+            };
+            
+            btnCancelar.onclick = onCancel;
+            modalCloseBtn.onclick = onCancel; // El 'x' funciona como cancelar
+            
+            modalContainer.style.display = 'flex';
         }
         
         // --- FUNCIONES DE EXPORTAR/IMPORTAR ---
@@ -1806,8 +2008,8 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            alert("Respaldo generado con éxito.");
-            cerrarMenu(); // Cerramos el menú después de exportar
+            mostrarAlerta("Respaldo Exitoso", "Tu archivo de respaldo se ha descargado."); // !MODIFICADO!
+            cerrarMenu();
         }
 
         function importarDatos(event) {
@@ -1816,41 +2018,46 @@
                 return; 
             }
             
-            if (!confirm("¿Importar respaldo? \n\n¡ATENCIÓN! Esto borrará TODOS los datos actuales que tengas en este dispositivo y los reemplazará con los datos del archivo. ¿Continuar?")) {
-                event.target.value = null; 
-                return;
-            }
+            const resetInput = () => { event.target.value = null; };
 
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const text = e.target.result;
-                    const data = JSON.parse(text);
-                    
-                    if (data.transacciones && data.presupuestos && data.clasificadores) {
-                        
-                        transacciones = data.transacciones;
-                        presupuestos = data.presupuestos;
-                        clasificadores = new Set(data.clasificadores);
-                        
-                        guardarDatosEnLocalStorage();
-                        
-                        alert("¡Datos importados con éxito! La aplicación se recargará.");
-                        location.reload();
-                        
-                    } else {
-                        alert("Error: El archivo no parece ser un respaldo válido.");
-                    }
-                } catch (error) {
-                    console.error("Error al importar:", error);
-                    alert("Error: No se pudo leer el archivo. Asegúrate de que sea el archivo .json correcto.");
-                } finally {
-                    event.target.value = null;
+            // !MODIFICADO!
+            mostrarConfirmacion("Importar Respaldo",
+                "¡ATENCIÓN! Esto borrará TODOS los datos actuales que tengas en este dispositivo y los reemplazará con los datos del archivo. ¿Continuar?",
+                () => { // Callback SI
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const text = e.target.result;
+                            const data = JSON.parse(text);
+                            
+                            if (data.transacciones && data.presupuestos && data.clasificadores) {
+                                
+                                transacciones = data.transacciones;
+                                presupuestos = data.presupuestos;
+                                clasificadores = new Set(data.clasificadores);
+                                
+                                guardarDatosEnLocalStorage();
+                                
+                                mostrarAlerta("Importación Exitosa", "¡Datos importados con éxito! La aplicación se recargará.", () => {
+                                    location.reload();
+                                });
+                                
+                            } else {
+                                mostrarAlerta("Error", "El archivo no parece ser un respaldo válido.");
+                                resetInput();
+                            }
+                        } catch (error) {
+                            console.error("Error al importar:", error);
+                            mostrarAlerta("Error", "No se pudo leer el archivo. Asegúrate de que sea el archivo .json correcto.");
+                            resetInput();
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+                () => { // Callback NO
+                    resetInput();
                 }
-            };
-            
-            reader.readAsText(file);
+            );
         }
 
     </script>
