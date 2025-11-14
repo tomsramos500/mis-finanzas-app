@@ -590,7 +590,7 @@
         }
         
         /* --- Estilos para Vista 6 Meses y Metas --- */
-        #seccion-evolucion-6meses, #seccion-metas {
+        #seccion-evolucion-6meses, #seccion-metas, #seccion-clasificadores {
             position: fixed;
             top: 0;
             left: 0;
@@ -604,10 +604,12 @@
             overflow-y: auto;
             transition: background-color 0.3s ease;
         }
-        #seccion-evolucion-6meses .app-header, #seccion-metas .app-header {
+        #seccion-evolucion-6meses .app-header, #seccion-metas .app-header, #seccion-clasificadores .app-header {
             justify-content: space-between; 
         }
-        #seccion-evolucion-6meses #btn-volver-app, #seccion-metas #btn-volver-app-metas {
+        #seccion-evolucion-6meses #btn-volver-app, 
+        #seccion-metas #btn-volver-app-metas,
+        #seccion-clasificadores #btn-volver-app-clasif {
             background: none;
             border: none;
             color: var(--color-texto-principal);
@@ -667,6 +669,41 @@
         }
         .meta-card.completada .meta-estado { color: var(--color-primario); }
         .meta-card.expirada .meta-estado { color: var(--color-gasto); }
+        
+        /* !NUEVO! Estilos para Gestionar Clasificadores */
+        .lista-gestion {
+            list-style: none;
+            padding: 0;
+        }
+        .lista-gestion li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: var(--color-fondo-elemento);
+            border: 1px solid var(--color-borde);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .lista-gestion li span {
+            font-weight: 500;
+        }
+        .lista-gestion li button {
+            padding: 5px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+        }
+        .lista-gestion li button.archivar-btn {
+            background-color: var(--color-gasto);
+            color: white;
+        }
+        .lista-gestion li button.reactivar-btn {
+            background-color: var(--color-primario);
+            color: var(--color-primario-texto);
+        }
         
         
         /* --- Media Queries para Responsive (Móvil) --- */
@@ -728,7 +765,7 @@
             }
             
             /* Ajustar vista 6 meses en móvil */
-            #seccion-evolucion-6meses, #seccion-metas {
+            #seccion-evolucion-6meses, #seccion-metas, #seccion-clasificadores {
                 padding: 10px;
             }
             #evolucion-6meses-container {
@@ -831,6 +868,7 @@
         
         <button id="btn-ver-metas" class="menu-button">Mis Metas</button>
         <button id="btn-ver-evolucion-6meses" class="menu-button">Evolución (6 Meses)</button>
+        <button id="btn-gestionar-clasif" class="menu-button">Gestionar Clasificaciones</button>
         
         <h2 style="margin-top: 20px;">Temas de Color</h2>
         <div class="theme-switcher">
@@ -882,12 +920,29 @@
             <button id="btn-ver-metas-archivadas">Metas Archivadas</button>
         </div>
         
-        <div id="lista-metas-activas">
+        <div id="lista-metas-activas"></div>
+        <div id="lista-metas-archivadas" style="display: none;"></div>
+    </div>
+    
+    <div id="seccion-clasificadores">
+        <div class="app-header">
+            <div class="app-header-logo">
+                <h1>Gestionar Clasificaciones</h1>
             </div>
+            <button id="btn-volver-app-clasif" title="Volver">&times;</button>
+        </div>
         
-        <div id="lista-metas-archivadas" style="display: none;">
-            </div>
+        <h2>Crear Nueva</h2>
+        <div class="formulario" id="form-agregar-clasificador">
+            <input type="text" id="form-clasif-nombre" placeholder="Nombre (ej: Supermercado)" class="span-2">
+            <button id="btn-guardar-clasif" class="span-2 btn-secundario">Guardar Clasificación</button>
+        </div>
+
+        <h2>Clasificadores Activos</h2>
+        <ul id="lista-clasif-activos" class="lista-gestion"></ul>
         
+        <h2>Clasificadores Archivados</h2>
+        <ul id="lista-clasif-archivados" class="lista-gestion"></ul>
     </div>
 
 
@@ -914,7 +969,8 @@
         let transacciones = {}; 
         let presupuestos = {}; 
         let metas = {}; 
-        let clasificadores = new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
+        // !MODIFICADO! Cambiamos la estructura de 'clasificadores'
+        let clasificadores = []; // Ahora es un array de objetos
         let mesSeleccionado = '';
         let vistaActual = 'resumen';
         let vistaFormularioActual = 'transaccion'; 
@@ -923,6 +979,7 @@
         let miGraficoEvolucion6Meses = null; 
         let temaActual = 'default'; 
         
+        // Colores base (se usan si el tema no define uno)
         const COLORES_CLASIF = {
             'GASTO': '#dc3545',
             'TARJETA': '#ffc107',
@@ -994,12 +1051,22 @@
         const btnVerMetasArchivadas = document.getElementById('btn-ver-metas-archivadas');
         const listaMetasActivas = document.getElementById('lista-metas-activas');
         const listaMetasArchivadas = document.getElementById('lista-metas-archivadas');
+        
+        // !NUEVO! Elementos DOM Gestionar Clasificadores
+        const btnGestionarClasif = document.getElementById('btn-gestionar-clasif');
+        const seccionClasificadores = document.getElementById('seccion-clasificadores');
+        const btnVolverAppClasif = document.getElementById('btn-volver-app-clasif');
+        const btnGuardarClasif = document.getElementById('btn-guardar-clasif');
+        const formClasifNombre = document.getElementById('form-clasif-nombre');
+        const listaClasifActivos = document.getElementById('lista-clasif-activos');
+        const listaClasifArchivados = document.getElementById('lista-clasif-archivados');
 
 
         // --- FUNCIONES DE GUARDADO (LOCALSTORAGE) ---
         function guardarDatosEnLocalStorage() {
             localStorage.setItem('misFinanzas_transacciones', JSON.stringify(transacciones));
-            localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(Array.from(clasificadores)));
+            // !MODIFICADO! Guardamos el array de objetos
+            localStorage.setItem('misFinanzas_clasificadores', JSON.stringify(clasificadores));
             localStorage.setItem('misFinanzas_presupuestos', JSON.stringify(presupuestos)); 
             localStorage.setItem('misFinanzas_metas', JSON.stringify(metas)); 
             localStorage.setItem('misFinanzas_tema', temaActual); 
@@ -1014,10 +1081,43 @@
             const temaGuardado = localStorage.getItem('misFinanzas_tema'); 
 
             transacciones = transGuardadas ? JSON.parse(transGuardadas) : {};
-            clasificadores = clasifGuardados ? new Set(JSON.parse(clasifGuardados)) : new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
             presupuestos = presupGuardados ? JSON.parse(presupGuardados) : {};
             metas = metasGuardadas ? JSON.parse(metasGuardadas) : {}; 
             temaActual = temaGuardado ? temaGuardado : 'default'; 
+            
+            // !NUEVO! Migración de datos de clasificadores
+            const clasifData = clasifGuardados ? JSON.parse(clasifGuardados) : [];
+            if (clasifData.length === 0 || typeof clasifData[0] === 'string') {
+                // Es el formato viejo (Set/Array de strings) o está vacío
+                console.log("Migrando clasificadores al nuevo formato...");
+                const clasifSet = clasifData.length > 0 ? new Set(clasifData) : new Set(['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']);
+                
+                clasificadores = Array.from(clasifSet).map(nombre => ({
+                    nombre: nombre,
+                    activo: true,
+                    esMeta: false 
+                }));
+                
+                // Asegurarse de que los básicos existan
+                for (const base of ['INGRESO', 'GASTO', 'TARJETA', 'AHORRO']) {
+                    if (!clasificadores.find(c => c.nombre === base)) {
+                        clasificadores.push({ nombre: base, activo: true, esMeta: false });
+                    }
+                }
+                
+                // Marcar las metas existentes como metas
+                Object.values(metas).forEach(meta => {
+                    const clasifMeta = clasificadores.find(c => c.nombre === meta.clasificador);
+                    if (clasifMeta) {
+                        clasifMeta.esMeta = true;
+                    }
+                });
+                
+                guardarDatosEnLocalStorage(); // Guardar el nuevo formato
+            } else {
+                // Ya está en el nuevo formato (Array de Objetos)
+                clasificadores = clasifData;
+            }
             
             console.log("Datos cargados.");
         }
@@ -1037,7 +1137,7 @@
             formClasificador.addEventListener('change', manejarCambioClasificador);
             btnGuardarPresupuesto.addEventListener('click', guardarPresupuesto); 
             
-            // !NUEVO! Listener para el cambio de fecha de transacción
+            // !MODIFICADO!
             formDate.addEventListener('change', actualizarSelectClasificadores);
             
             // Listeners para Toggle de Formularios
@@ -1072,6 +1172,11 @@
             btnVerMetasActivas.addEventListener('click', () => cambiarVistaMetas('activas'));
             btnVerMetasArchivadas.addEventListener('click', () => cambiarVistaMetas('archivadas'));
             
+            // !NUEVO! Listeners para Gestionar Clasificadores
+            btnGestionarClasif.addEventListener('click', mostrarVistaClasificadores);
+            btnVolverAppClasif.addEventListener('click', ocultarVistaClasificadores);
+            btnGuardarClasif.addEventListener('click', agregarNuevoClasificadorDesdeModal);
+            
             // Listeners para Temas
             themeButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -1090,7 +1195,6 @@
             mesSeleccionado = selectMes.value;
             formDate.value = new Date().toISOString().split('T')[0];
             
-            // Cargar selectores DESPUÉS de que formDate tenga valor
             actualizarSelectClasificadores();
             actualizarSelectPresupuesto(); 
             
@@ -1098,26 +1202,13 @@
             cambiarVistaFormulario('transaccion'); 
         });
         
+        // !MODIFICADO! Ya no usa prompt(), ahora abre el modal
         function manejarCambioClasificador() {
             if (formClasificador.value === '--NUEVO--') {
-                const nuevoClasif = prompt("Escribe el nombre de la nueva clasificación:");
+                mostrarVistaClasificadores();
                 
-                if (nuevoClasif && nuevoClasif.trim() !== '') {
-                    const clasifFormateado = nuevoClasif.trim().toUpperCase();
-                    
-                    if (clasificadores.has(clasifFormateado)) {
-                        mostrarAlerta("Atención", "Esa clasificación ya existe."); 
-                        formClasificador.value = clasifFormateado; 
-                    } else {
-                        clasificadores.add(clasifFormateado);
-                        guardarDatosEnLocalStorage();
-                        actualizarSelectClasificadores(); 
-                        actualizarSelectPresupuesto(); 
-                        formClasificador.value = clasifFormateado; 
-                    }
-                } else {
-                    formClasificador.value = 'GASTO'; 
-                }
+                // Dejamos seleccionado GASTO por defecto en el form
+                formClasificador.value = 'GASTO'; 
             }
         }
         
@@ -1198,7 +1289,7 @@
             const id = `meta_${Date.now()}`;
             const clasifFormateado = nombre.trim().toUpperCase();
             
-            if (clasificadores.has(clasifFormateado)) {
+            if (clasificadores.find(c => c.nombre === clasifFormateado)) {
                 mostrarAlerta("Error", `Ya existe un clasificador o meta con el nombre "${clasifFormateado}". Usa un nombre único.`);
                 return;
             }
@@ -1211,7 +1302,13 @@
                 fechaLimite: fecha
             };
             
-            clasificadores.add(clasifFormateado);
+            // !MODIFICADO! Añadir como objeto
+            clasificadores.push({
+                nombre: clasifFormateado,
+                activo: true,
+                esMeta: true
+            });
+            
             actualizarSelectClasificadores();
             actualizarSelectPresupuesto();
             
@@ -1294,6 +1391,93 @@
         }
         
         // --- FIN FUNCIONES METAS ---
+        
+        // !NUEVO! --- FUNCIONES GESTIONAR CLASIFICADORES ---
+        
+        function mostrarVistaClasificadores() {
+            cerrarMenu();
+            document.querySelector('.container').style.display = 'none';
+            seccionClasificadores.style.display = 'block';
+            renderizarListasDeClasificadores();
+        }
+
+        function ocultarVistaClasificadores() {
+            seccionClasificadores.style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+            actualizarSelectClasificadores(); // Actualizar dropdowns al salir
+            actualizarSelectPresupuesto();
+        }
+        
+        function renderizarListasDeClasificadores() {
+            listaClasifActivos.innerHTML = '';
+            listaClasifArchivados.innerHTML = '';
+            
+            // No se pueden archivar los básicos ni las metas
+            const basicos = ['INGRESO', 'GASTO', 'TARJETA', 'AHORRO'];
+            
+            clasificadores.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            
+            clasificadores.forEach(c => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${c.nombre} ${c.esMeta ? '(Meta)' : ''}</span>`;
+                
+                // Lógica de botones
+                if (c.activo) {
+                    // Si está activo
+                    if (!basicos.includes(c.nombre) && !c.esMeta) {
+                        li.innerHTML += `<button class="archivar-btn" onclick="archivarClasificador('${c.nombre}')">Archivar</button>`;
+                    }
+                    listaClasifActivos.appendChild(li);
+                } else {
+                    // Si está archivado
+                    li.innerHTML += `<button class="reactivar-btn" onclick="reactivarClasificador('${c.nombre}')">Reactivar</button>`;
+                    listaClasifArchivados.appendChild(li);
+                }
+            });
+        }
+        
+        function agregarNuevoClasificadorDesdeModal() {
+            const nombre = formClasifNombre.value;
+            if (!nombre || nombre.trim() === '') {
+                mostrarAlerta("Error", "El nombre no puede estar vacío.");
+                return;
+            }
+            
+            const clasifFormateado = nombre.trim().toUpperCase();
+            
+            if (clasificadores.find(c => c.nombre === clasifFormateado)) {
+                mostrarAlerta("Error", "Esa clasificación ya existe.");
+            } else {
+                clasificadores.push({
+                    nombre: clasifFormateado,
+                    activo: true,
+                    esMeta: false
+                });
+                guardarDatosEnLocalStorage();
+                renderizarListasDeClasificadores();
+                formClasifNombre.value = '';
+            }
+        }
+        
+        function archivarClasificador(nombre) {
+            const clasif = clasificadores.find(c => c.nombre === nombre);
+            if (clasif) {
+                clasif.activo = false;
+                guardarDatosEnLocalStorage();
+                renderizarListasDeClasificadores();
+            }
+        }
+        
+        function reactivarClasificador(nombre) {
+            const clasif = clasificadores.find(c => c.nombre === nombre);
+            if (clasif) {
+                clasif.activo = true;
+                guardarDatosEnLocalStorage();
+                renderizarListasDeClasificadores();
+            }
+        }
+        
+        // --- FIN FUNCIONES GESTIONAR CLASIFICADORES ---
 
         
         // --- FUNCIONES DE TEMAS ---
@@ -1343,8 +1527,9 @@
         }
 
         function obtenerColorClasificador(clasificador, colores) {
-            const metaNombres = Object.values(metas).map(m => m.clasificador);
-            if (metaNombres.includes(clasificador)) {
+            // !MODIFICADO! Usar el array de objetos
+            const clasifObj = clasificadores.find(c => c.nombre === clasificador);
+            if (clasifObj && clasifObj.esMeta) {
                 return colores.ahorro;
             }
             
@@ -1476,74 +1661,67 @@
             formClasificador.value = 'GASTO';
         }
 
-        // !MODIFICADO! Esta función ahora filtra las metas expiradas dinámicamente
+        // !MODIFICADO! Lee el array de objetos
         function actualizarSelectClasificadores() {
             const valorPrevio = formClasificador.value; 
-            
             formClasificador.innerHTML = ''; 
-            const clasificadoresOrdenados = Array.from(clasificadores).sort();
             
-            // !NUEVO! Leer la fecha del formulario de transacción
+            // Leer la fecha de la transacción para filtrar metas expiradas
             const fechaTransaccion = new Date(formDate.value + 'T12:00:00');
             
-            const metasExpiradas = new Set();
-            for (const id in metas) {
-                const meta = metas[id];
-                const fechaLimite = new Date(meta.fechaLimite + 'T12:00:00');
-                
-                // Si la fecha límite es anterior a la fecha de la transacción,
-                // se considera expirada para esta transacción.
-                if (fechaLimite < fechaTransaccion) {
-                    metasExpiradas.add(meta.clasificador);
-                }
-            }
+            const clasificadoresActivos = clasificadores.filter(c => c.activo);
             
-            for (let c of clasificadoresOrdenados) {
-                // Condición: No agregar si es una meta expirada
-                if (metasExpiradas.has(c)) {
-                    continue; 
+            for (let c of clasificadoresActivos.sort((a,b) => a.nombre.localeCompare(b.nombre))) {
+                
+                // Si es una meta, chequear que no esté expirada para esta fecha
+                if (c.esMeta) {
+                    const meta = Object.values(metas).find(m => m.clasificador === c.nombre);
+                    if (meta) {
+                        const fechaLimite = new Date(meta.fechaLimite + 'T12:00:00');
+                        if (fechaLimite < fechaTransaccion) {
+                            continue; // No agregar esta meta expirada al dropdown
+                        }
+                    }
                 }
 
                 const option = document.createElement('option');
-                option.value = c;
-                option.textContent = c;
+                option.value = c.nombre;
+                option.textContent = c.nombre;
                 formClasificador.appendChild(option);
             }
             
             const optionNueva = document.createElement('option');
             optionNueva.value = '--NUEVO--';
-            optionNueva.textContent = '...Añadir nueva clasificación...';
+            optionNueva.textContent = '...Gestionar clasificaciones...'; // !MODIFICADO!
             optionNueva.style.fontStyle = 'italic'; 
             optionNueva.style.color = '#555';
             formClasificador.appendChild(optionNueva);
             
-            // Restaurar valor previo si sigue siendo válido
-            if (valorPrevio && valorPrevio !== '--NUEVO--' && !metasExpiradas.has(valorPrevio)) {
+            if (valorPrevio && valorPrevio !== '--NUEVO--' && clasificadoresActivos.find(c => c.nombre === valorPrevio)) {
                 formClasificador.value = valorPrevio;
             } else {
-                // Si no, seleccionar GASTO o el primero disponible
-                formClasificador.value = clasificadores.has('GASTO') ? 'GASTO' : clasificadoresOrdenados[0]; 
+                formClasificador.value = 'GASTO'; 
             }
         }
         
         // --- FUNCIONES DE PRESUPUESTO ---
         function actualizarSelectPresupuesto() {
             formPresupuestoClasif.innerHTML = '';
-            const clasificadoresOrdenados = Array.from(clasificadores).sort();
             
             const optionDefault = document.createElement('option');
             optionDefault.value = '';
             optionDefault.textContent = 'Selecciona categoría para presupuestar';
             formPresupuestoClasif.appendChild(optionDefault);
-            
-            const metaNombres = Object.values(metas).map(m => m.clasificador);
 
-            for (let c of clasificadoresOrdenados) {
-                if (c === 'INGRESO' || metaNombres.includes(c)) continue; 
-                
+            // !MODIFICADO! Leer el array de objetos
+            const clasificadoresParaPresupuesto = clasificadores
+                .filter(c => c.activo && !c.esMeta && c.nombre !== 'INGRESO')
+                .sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+            for (let c of clasificadoresParaPresupuesto) {
                 const option = document.createElement('option');
-                option.value = c;
-                option.textContent = c;
+                option.value = c.nombre;
+                option.textContent = c.nombre;
                 formPresupuestoClasif.appendChild(option);
             }
         }
@@ -1689,7 +1867,8 @@
             const sumas = {};
             let saldoTotal = 0.0;
             
-            for (let c of clasificadores) { sumas[c] = 0; }
+            // !MODIFICADO! Inicializar sumas desde el array de objetos
+            for (let c of clasificadores) { sumas[c.nombre] = 0; }
             
             for (let t of datosMes) {
                 if (!sumas[t.clasificador]) {
@@ -1742,7 +1921,6 @@
                 const presupuestado = presupuestos[keyPresupuesto] || 0;
 
                 const cardGasto = document.createElement('div');
-                // Si tiene presupuesto O es una meta, ocupa todo el ancho
                 const esMeta = metaNombres.includes(clasif);
                 cardGasto.className = `resumen-card ${(presupuestado > 0 || esMeta) ? 'full-width' : ''}`;
                 
@@ -1750,7 +1928,6 @@
                 let contenidoPresupuesto = '';
                 
                 if (esMeta) {
-                    // Es una meta, buscar la meta
                     const meta = Object.values(metas).find(m => m.clasificador === clasif);
                     if (meta) {
                         const totalAhorrado = calcularProgresoMeta(clasif);
@@ -1766,7 +1943,6 @@
                     `;
                     }
                 } else if (presupuestado > 0) {
-                    // Es un gasto con presupuesto
                     let porcentaje = (gastado / presupuestado) * 100;
                     let barraClass = 'progress-bar';
                     
@@ -1919,11 +2095,12 @@
                 labels.push(dia); 
             }
             
-            for (const clasif of clasificadores) {
-                datasetsData.set(clasif, {
-                    label: clasif,
+            // !MODIFICADO! Iterar sobre array de objetos
+            for (const clasifObj of clasificadores) {
+                datasetsData.set(clasifObj.nombre, {
+                    label: clasifObj.nombre,
                     data: new Array(diasEnElMes).fill(0),
-                    backgroundColor: obtenerColorClasificador(clasif, colores)
+                    backgroundColor: obtenerColorClasificador(clasifObj.nombre, colores)
                 });
             }
             
@@ -2035,7 +2212,9 @@
                     clasificadoresEnPeriodo.add(t.clasificador); 
                 }
                 
-                for (const clasif of clasificadores) { // Usamos todos los clasificadores
+                // !MODIFICADO! Iterar sobre array de objetos
+                for (const clasifObj of clasificadores) { 
+                    const clasif = clasifObj.nombre;
                     if (!datasetsData[clasif]) {
                         datasetsData[clasif] = new Array(5 - i).fill(0); 
                     }
@@ -2043,7 +2222,8 @@
                 }
             }
             
-             for (const clasif of clasificadores) {
+            for (const clasifObj of clasificadores) {
+                const clasif = clasifObj.nombre;
                  if(datasetsData[clasif]) {
                     while (datasetsData[clasif].length < 6) {
                         datasetsData[clasif].unshift(0);
@@ -2053,10 +2233,9 @@
 
             const datasets = [];
             
-            const clasificadoresOrdenados = ['INGRESO', ...Array.from(clasificadores).filter(c => c !== 'INGRESO').sort()];
+            const clasificadoresOrdenados = ['INGRESO', ...clasificadores.filter(c => c.nombre !== 'INGRESO').sort((a,b) => a.nombre.localeCompare(b.nombre)).map(c => c.nombre)];
 
             for (const clasificador of clasificadoresOrdenados) {
-                // Solo agregar si tuvo datos en el período
                 if (clasificadoresEnPeriodo.has(clasificador)) {
                     const color = obtenerColorClasificador(clasificador, colores);
                     datasets.push({
@@ -2172,7 +2351,6 @@
             modalLista.innerHTML = '';
             modalBotones.innerHTML = '';
             
-            // Restaura el evento onclick del 'x' por si fue sobreescrito
             modalCloseBtn.onclick = cerrarModal;
         }
         
@@ -2190,7 +2368,6 @@
             modalLista.style.display = 'block';
             modalLista.innerHTML = ''; 
             
-            // Asigna el onclick correcto para el 'x'
             modalCloseBtn.onclick = cerrarModal;
             
             if (datosDia.length === 0) {
@@ -2273,7 +2450,7 @@
             const backupDatos = {
                 transacciones: transacciones,
                 presupuestos: presupuestos,
-                clasificadores: Array.from(clasificadores),
+                clasificadores: clasificadores, // !MODIFICADO!
                 metas: metas 
             };
             
@@ -2317,8 +2494,21 @@
                                 
                                 transacciones = data.transacciones;
                                 presupuestos = data.presupuestos;
-                                clasificadores = new Set(data.clasificadores);
                                 metas = data.metas; 
+                                
+                                // !NUEVO! Lógica de importación/migración de clasificadores
+                                if (data.clasificadores.length === 0 || typeof data.clasificadores[0] === 'string') {
+                                    // Importando un backup VIEJO
+                                    const clasifSet = new Set(data.clasificadores);
+                                    clasificadores = Array.from(clasifSet).map(nombre => ({
+                                        nombre: nombre,
+                                        activo: true,
+                                        esMeta: !!Object.values(metas).find(m => m.clasificador === nombre)
+                                    }));
+                                } else {
+                                    // Importando un backup NUEVO (array de objetos)
+                                    clasificadores = data.clasificadores;
+                                }
                                 
                                 guardarDatosEnLocalStorage();
                                 
